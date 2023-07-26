@@ -1,0 +1,2 @@
+class ComCommandException(Exception):
+    pass

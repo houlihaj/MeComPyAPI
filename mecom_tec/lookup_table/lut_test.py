@@ -1,16 +1,10 @@
-###################################################################################################################
-# PROPRIETARY AND CONFIDENTIAL
-# THIS SOFTWARE IS THE SOLE PROPERTY AND COPYRIGHT (c) 2023 OF ROCKLEY PHOTONICS LTD.
-# USE OR REPRODUCTION IN PART OR AS A WHOLE WITHOUT THE WRITTEN AGREEMENT OF ROCKLEY PHOTONICS LTD IS PROHIBITED.
-# RPLTD NOTICE VERSION: 1.1.1
-###################################################################################################################
 import time
 
 from lut_cmd import LutCmd
 from lut_exception import LutException
 from lut_status import LutStatus
 
-from ..exceptions import ComCommandException
+from mecom_core.com_command_exception import ComCommandException
 
 
 class LutTest(object):
