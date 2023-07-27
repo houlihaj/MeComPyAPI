@@ -2,10 +2,20 @@ from mecom_core.com_command_exception import ComCommandException
 from mecom_core.mecom_frame import MeComPacket
 from mecom_core.mecom_query_set import MeComQuerySet
 from mecom_core.mecom_var_convert import MeComVarConvert
+from phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
 
 
 class MeComBasicCmd:
+    """
+    Basic communication commands. Most of the products do support them.
+    """
     def __init__(self, mequery_set: MeComQuerySet):
+        """
+        Initializes a new instance of MeComBasicCmd.
+
+        :param mequery_set: Reference to the communication interface.
+        :type mequery_set: MeComQuerySet
+        """
         self.mequery_set = mequery_set
 
         # self.address = self.get_device_address()
@@ -290,7 +300,12 @@ class MeComBasicCmd:
 
 
 if __name__ == "__main__":
-    mecom_basic_cmd = MeComBasicCmd()
+    phy_com = MeComPhySerialPort()
+    phy_com.connect(port_name="COM9")
+
+    mequery_set_ = MeComQuerySet(phy_com=phy_com)
+
+    mecom_basic_cmd = MeComBasicCmd(mequery_set=mequery_set_)
 
     # # "send_string" and "get_data_or_timeout" work
     # mecom_basic_cmd.phy_com.send_string(stream="#000008?IF018868\r")
@@ -308,5 +323,5 @@ if __name__ == "__main__":
                                                          instance=1)  # parameter_name : "Object Temperature"
     print(f"object_temperature : {object_temperature}")
 
-    mecom_basic_cmd.phy_com.tear()
+    phy_com.tear()
     print("Done...")

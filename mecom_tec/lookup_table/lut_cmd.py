@@ -225,7 +225,7 @@ class LutCmd(object):
             # until the payload is 524 UINT4 bytes long. This is so that the payload
             # is always 256 UINT8 bytes large when sent to the device.
             payload_length = len(tx_frame.payload)
-            if payload_length < 524:
+            if payload_length < 524:  # 524
                 for i in range(524 - payload_length):
                     tx_frame.payload = mecom_var_convert.add_uint4(tx_frame.payload, value=0)
 
@@ -240,7 +240,7 @@ class LutCmd(object):
                     if timeout < 50:
                         time.sleep(0.010)
                     else:
-                        LutException(f"Device Busy while sending Lookup Table")
+                        raise LutException(f"Device Busy while sending Lookup Table")
                 else:
                     break
 
@@ -264,7 +264,7 @@ class LutCmd(object):
                 if timeout < 50:
                     time.sleep(0.010)
                 else:
-                    LutException(f"Device Busy while trying to analyze Lookup Table")
+                    raise LutException(f"Device Busy while trying to analyze Lookup Table")
             else:
                 break
 
@@ -283,7 +283,7 @@ class LutCmd(object):
                 old_crc = self._calc_crc(crc=old_crc, record=record)
             else:
                 # Add the CRC to the last record (EOF record) as Field2 attribute
-                record.field_to_int = int(old_crc)
+                record.field2_int = int(old_crc)
 
     def _calc_crc(self, crc: int, record: LutRecord) -> int:
         """
@@ -389,35 +389,42 @@ class LutCmd(object):
         field2 = buffer[2]
         
         record = LutRecord()
-        record.Field1(value=0).set()
-        
+        # record.Field1(value=0).set()
+        record.field1 = 0
+
         try:
             if instruction == "TABLE_INFO":
                 record.instruction = LUT_TABLE_INFO_INSTR
                 if field1 == "START":
-                    record.Field1(value=LUT_TABLE_INFO_F1_START).set()
+                    # record.Field1(value=LUT_TABLE_INFO_F1_START).set()
+                    record.field1 = LUT_TABLE_INFO_F1_START
                 elif field1 == "END":
-                    record.Field1(value=LUT_TABLE_INFO_F1_END).set()
+                    # record.Field1(value=LUT_TABLE_INFO_F1_END).set()
+                    record.field1 = LUT_TABLE_INFO_F1_END
                 else:
                     raise LutException(f"Error in Field1 Enumeration : {field1}")
-                record.field_to_int = int(field2)
+                record.field2_int = int(field2)
             
             elif instruction == "SIN_RAMP_TO":
                 record.instruction = LUT_SIN_RAMP_TO_INSTR
                 if field1 == "FROM_ACT":
-                    record.Field1(value=LUT_SIN_RAMP_TO_F1_FROM_ACT).set()
+                    # record.Field1(value=LUT_SIN_RAMP_TO_F1_FROM_ACT).set()
+                    record.field1 = LUT_SIN_RAMP_TO_F1_FROM_ACT
                 elif field1 == "FROM_NOM":
-                    record.Field1(value=LUT_SIN_RAMP_TO_F1_FROM_NOM).set()
+                    # record.Field1(value=LUT_SIN_RAMP_TO_F1_FROM_NOM).set()
+                    record.field1 = LUT_SIN_RAMP_TO_F1_FROM_NOM
                 else:
                     raise LutException(f"Error in Field1 Enumeration : {field1}")
-                record.field_to_float = float(field2)
+                record.field2_float = float(field2)
             
             elif instruction == "REPEAT_MARK":
                 record.instruction = LUT_REPEAT_MARK_INSTR
                 if field1 == "START":
-                    record.Field1(value=LUT_REPEAT_MARK_F1_START).set()
+                    # record.Field1(value=LUT_REPEAT_MARK_F1_START).set()
+                    record.field1 = LUT_REPEAT_MARK_F1_START
                 elif field1 == "END":
-                    record.Field1(value=LUT_REPEAT_MARK_F1_END).set()
+                    # record.Field1(value=LUT_REPEAT_MARK_F1_END).set()
+                    record.field1 = LUT_REPEAT_MARK_F1_END
                 else:
                     raise LutException(f"Error in Field1 Enumeration : {field1}")
              
@@ -425,54 +432,61 @@ class LutCmd(object):
                 record.instruction = LUT_LIN_RAMP_TIME_INSTR
                 f1_temp = int(field1)
                 if 10 >= f1_temp >= 16_777_216:
-                    record.Field1(value=f1_temp).set()
-                record.field_to_float = float(field2)
+                    # record.Field1(value=f1_temp).set()
+                    record.field1 = f1_temp
+                record.field2_float = float(field2)
             
             elif instruction == "STATUS":
                 record.instruction = LUT_STATUS_INSTR
                 if field1 == "DISABLE":
-                    record.Field1(value=LUT_STATUS_F1_DISABLE).set()
+                    # record.Field1(value=LUT_STATUS_F1_DISABLE).set()
+                    record.field1 = LUT_STATUS_F1_DISABLE
                 elif field1 == "ENABLE":
-                    record.Field1(value=LUT_STATUS_F1_ENABLE).set()
+                    # record.Field1(value=LUT_STATUS_F1_ENABLE).set()
+                    record.field1 = LUT_STATUS_F1_ENABLE
                 else:
                     raise LutException(f"Error in Field1 Enumeration : {field1}")
             
             elif instruction == "WAIT":
                 record.instruction = LUT_WAIT_INSTR
                 if field1 == "FOREVER":
-                    record.Field1(value=LUT_WAIT_F1_FOREVER).set()
+                    # record.Field1(value=LUT_WAIT_F1_FOREVER).set()
+                    record.field1 = LUT_WAIT_F1_FOREVER
                 elif field1 == "TIME":
-                    record.Field1(value=LUT_WAIT_F1_TIME).set()
+                    # record.Field1(value=LUT_WAIT_F1_TIME).set()
+                    record.field1 = LUT_WAIT_F1_TIME
                     f2_temp = int(field2)
                     if f2_temp >= 0:
-                        record.field_to_int = f2_temp
+                        record.field2_int = f2_temp
             
             elif instruction == "SET_FLOAT":
                 record.instruction = LUT_SET_FLOAT_INSTR
                 f1temp_1 = int(field1)  # need to confirm operation
                 if 0 <= f1temp_1 <= 16_777_216:
-                    record.Field1(value=f1temp_1).set()  # need to confirm operation
-                record.field_to_int = int(field2)  # need to confirm operation
+                    # record.Field1(value=f1temp_1).set()  # need to confirm operation
+                    record.field1 = f1temp_1  # need to confirm operation
+                record.field2_int = int(field2)  # need to confirm operation
             
             elif instruction == "SET_INT":
                 record.instruction = LUT_SET_INT_INSTR
                 f1temp_2 = int(field1)  # need to confirm operation
                 if 0 <= f1temp_2 <= 16_777_216:
-                    record.Field1(value=f1temp_2).set()  # need to confirm operation
-                record.field_to_int = int(field2)  # need to confirm operation
+                    # record.Field1(value=f1temp_2).set()  # need to confirm operation
+                    record.field1 = f1temp_2  # need to confirm operation
+                record.field2_int = int(field2)  # need to confirm operation
                 
             elif instruction == "TILL_TEMP_STABLE":
                 record.instruction = LUT_WAIT_TILL_STABLE_INSTR
                 
             elif instruction == "SET_TARGET_INST":
                 record.instruction = LUT_CHANGE_TARGET_INST_INSTR
-                record.field_to_int = int(field2)  # need to confirm operation
+                record.field2_int = int(field2)  # need to confirm operation
                 
             elif instruction == "EOF":
                 record.instruction = LUT_EOF_INSTR
                 
             else:
-                LutException(f"Error in Instruction Enumeration : {instruction}")
+                raise LutException(f"Error in Instruction Enumeration : {instruction}")
         
         except LutException as e:
             raise LutException("Error on line {have to implement}")  # need to fully implement
@@ -488,13 +502,6 @@ if __name__ == "__main__":
     mequery_set = MeComQuerySet(phy_com=phy_com)
 
     lut_cmd = LutCmd(mecom_query_set=mequery_set)
-
-    # records_ = lut_cmd._parse_lut_into_list(reader="LookupTable Sine ramp_0.1_degC_per_sec.csv")
-    # print("Pause...")
-    # lut_cmd._add_crc_to_table(records=records_)
-    # print("Pause 2...")
-    # print(lut_cmd._split_list(list_input=records_, max_list_size=32))
-    # print("Done...")
 
     lut_cmd.download_lookup_table(address=2, filepath="LookupTable Sine ramp_0.1_degC_per_sec.csv")
 
