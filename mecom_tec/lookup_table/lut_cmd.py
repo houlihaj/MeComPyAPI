@@ -9,8 +9,11 @@ from lut_status import LutStatus
 from lut_exception import LutException
 from lut_constants import *
 
-# from ..mecom import MeCom
-import instruments.meerstetter.pyMeCom.mecom.mecom
+from mecom_core.mecom_query_set import MeComQuerySet
+from mecom_core.mecom_var_convert import MeComVarConvert
+from mecom_core.mecom_frame import MeComPacket
+from mecom_core.mecom_basic_cmd import MeComBasicCmd
+from phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
 
 
 class LutCmd(object):
@@ -18,28 +21,23 @@ class LutCmd(object):
     Lookup Table commands (only supported for TEC Controllers)
     Please take a look at the TEC Controller communication protocol document for more information.
     """
-    def __init__(self, mecom_instance: instruments.meerstetter.pyMeCom.mecom.mecom.MeCom):
-        self.mecom = mecom_instance
-        # self.lut_cmd(me_query_set=)
-        # raise NotImplementedError
-
-    def lut_cmd(self, me_query_set) -> None:
+    def __init__(self, mecom_query_set: MeComQuerySet):
         """
         Initializes a new instance of LutG1Cmd.
-
-        :param me_query_set: Reference to the communication interface.
-        :type me_query_set:
-        :return: None
+        
+        :param mecom_query_set: Reference to the communication interface.
+        :type mecom_query_set: MeComQuerySet
         """
-        raise NotImplementedError
+        self.mequery_set = mecom_query_set
+        self.mecom_basic_cmd = MeComBasicCmd(mequery_set=mecom_query_set)
 
-    def download_lookup_table(self, address: bytes, filepath: str) -> None:
+    def download_lookup_table(self, address: int, filepath: str) -> None:
         """
         Downloads a lookup table file (*.csv) to the device.
 
         :param address: Device Address. Use null to use the DefaultDeviceAddress
             defined on MeComQuerySet.
-        :type address: bytes
+        :type address: int
         :param filepath: Path of the lookup table file.
         :type filepath: str
         :return: None
@@ -68,157 +66,174 @@ class LutCmd(object):
         # Send the signal to start analyzing the lookup table on the device
         self._start_analyze_and_wait(address=address)
 
-    def start_analyze_lut(self, address: bytes) -> bool:
+    def start_analyze_lut(self, address: int) -> bool:
         """
         This query is used to analyze the lookup table.
         It has to be sent after a lookup table has been completely downloaded onto the device.
 
         :param address: Device Address. Use null to use the DefaultDeviceAddress
             defined on MeComQuerySet.
-        :type address: bytes
+        :type address: int
         :return: True if the query was successful, False if Device MeComPacket was denied
         :return: bool
         """
+        mecom_var_convert = MeComVarConvert()
         try:
+            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "?LT")
+            tx_frame.payload = (
+                mecom_var_convert.add_uint4(tx_frame.payload, 2)
+            )  # 0 = Status Query, 1 = Program, 2 = Do Analyze
+            rx_frame = self.mequery_set.query(tx_frame=tx_frame)
+            
             # MeComPacket answers to the query:
             # 0 = Idle
             # 1 = Erasing or Writing (Sent Data is ignored)
             # 2 = New Data accepted
             # 3 = Error
-            status = self.mecom.do_analyze_lut()
+            status = mecom_var_convert.read_uint4(rx_frame.payload)
             return status == LUT_FLASH_STATUS_IDLE
         except LutException as e:
             raise LutException(f"Lookup table test failed: Address: {address}; Detail: {e}")
 
-    # def get_status(self, address: bytes, instance: bytes) -> LutStatus:
-    #     """
-    #     Get lookup table status by retrieving the parameter value 52002.
-    #
-    #     :param address: Device Address. Use null to use the DefaultDeviceAddress
-    #         defined on MeComQuerySet.
-    #     :type address: bytes
-    #     :param instance: Device Instance/Channel.
-    #     :type instance: bytes
-    #     :return: LutStatus Enum value
-    #     :rtype: LutStatus
-    #     """
-    #     raise NotImplementedError
-    #
-    # def start_lookup_table(self, address: bytes, instance: bytes) -> None:
-    #     """
-    #     Starts the lookup table that is currently stored on the device.
-    #
-    #     :param address: Device Address. Use null to use the DefaultDeviceAddress
-    #         defined on MeComQuerySet.
-    #     :type address: bytes
-    #     :param instance: Device Instance/Channel.
-    #     :type instance: bytes
-    #     :return: None
-    #     """
-    #     # Initiate the Lookup Table Start process by writing 1 to ParID 52000
-    #     logging.debug(f"start the lookup table for channel {self.channel}")
-    #     success = self.session().set_parameter(parameter_name="Lookup Table Start", value=1,
-    #                                            address=self.address, parameter_instance=self.channel)
-    #     if not success:
-    #         raise LutException("[EXCEPTION] start_lookup_table() was unsuccessful...")
-    #
-    # def stop_lookup_table(self, address: bytes, instance: bytes) -> None:
-    #     """
-    #     Cancels the active lookup table progress process.
-    #
-    #     :param address: Device Address. Use null to use the DefaultDeviceAddress
-    #         defined on MeComQuerySet.
-    #     :type address: bytes
-    #     :param instance: Device Instance/Channel.
-    #     :type instance: bytes
-    #     :return: None
-    #     """
-    #     # Stop the Lookup Table process by writing 1 to ParID 52001
-    #     logging.debug(f"stop the lookup table for channel {self.channel}")
-    #     success = self.session().set_parameter(parameter_name="Lookup Table Stop", value=1,
-    #                                            address=self.address, parameter_instance=self.channel)
-    #     if not success:
-    #         raise LutException("[EXCEPTION] stop_lookup_table() was unsuccessful...")
-    #
-    # def get_current_table_line(self, address: bytes, instance: bytes) -> int:
-    #     """
-    #     Get the number of the currently executed Data Table line.
-    #     Only valid if the current "Lookup Table Status" is "Executing...".
-    #
-    #     :param address: Device Address. Use null to use the DefaultDeviceAddress
-    #         defined on MeComQuerySet.
-    #     :type address: bytes
-    #     :param instance: Device Instance/Channel.
-    #     :type instance: bytes
-    #     :return: None
-    #     :rtype: int
-    #     """
-    #     logging.debug(f"get the lookup table status current table line for channel {self.channel}")
-    #     resp = self.session().get_parameter(parameter_name="Lookup Table Status Current Table Line",
-    #                                         address=self.address)
-    #     return int(resp)
-    #
-    # def set_lookup_table_id(self, address: bytes, instance: bytes, table_id: int) -> None:
-    #     """
-    #     Select the Lookup Table part to be executed by passing the Table ID
-    #     defined in the Data Table.
-    #
-    #     :param address: Device Address. Use null to use the DefaultDeviceAddress
-    #         defined on MeComQuerySet.
-    #     :type address: bytes
-    #     :param instance: Device Instance/Channel.
-    #     :type instance: bytes
-    #     :param table_id: Lookup Table ID to be executed.
-    #     :type table_id: int
-    #     :return: None
-    #     """
-    #     logging.debug(f"set the lookup table id selection for channel {self.channel}")
-    #     self.session().set_parameter(value=table_id, parameter_name="Lookup Table ID Selection",
-    #                                  address=self.address)
-    #
-    # def set_number_of_repetitions(self, address: bytes, instance: bytes, nr_of_repetitions: int) -> None:
-    #     """
-    #     Set the number of executions of the "REPEAT_MARK" elements.
-    #     See the Lookup Table definitions for more information about these elements.
-    #
-    #     :param address: Device Address. Use null to use the DefaultDeviceAddress
-    #         defined on MeComQuerySet.
-    #     :type address: bytes
-    #     :param instance: Device Instance/Channel.
-    #     :type instance: bytes
-    #     :param nr_of_repetitions: Amount of repetitions. Value Range: 0 ... 100'000.
-    #     :type nr_of_repetitions: int
-    #     :return: None
-    #     """
-    #     logging.debug(f"set the number of repetitions for channel {self.channel}")
-    #     self.session().set_parameter(value=repetitions, parameter_name="Number Of Repetitions",
-    #                                  address=self.address)
+    def get_status(self, address: int, instance: int) -> LutStatus:
+        """
+        Get lookup table status by retrieving the parameter value 52002.
 
-    def _download_page(self, address: bytes, list_lut_record: List[LutRecord], page_offset: int) -> None:
+        :param address: Device Address. Use null to use the DefaultDeviceAddress
+            defined on MeComQuerySet.
+        :type address: int
+        :param instance: Device Instance/Channel.
+        :type instance: int
+        :return: LutStatus Enum value
+        :rtype: LutStatus
+        """
+        status = self.mecom_basic_cmd.get_int32_value(address=address, parameter_id=52002, instance=instance)
+        return LutStatus(status)
+
+    def start_lookup_table(self, address: int, instance: int) -> None:
+        """
+        Starts the lookup table that is currently stored on the device.
+
+        :param address: Device Address. Use null to use the DefaultDeviceAddress
+            defined on MeComQuerySet.
+        :type address: int
+        :param instance: Device Instance/Channel.
+        :type instance: int
+        :return: None
+        """
+        # Initiate the Lookup Table Start process by writing 1 to ParID 52000
+        self.mecom_basic_cmd.set_int32_value(address=address, parameter_id=52000, instance=instance, value=1)
+
+    def stop_lookup_table(self, address: int, instance: int) -> None:
+        """
+        Cancels the active lookup table progress process.
+
+        :param address: Device Address. Use null to use the DefaultDeviceAddress
+            defined on MeComQuerySet.
+        :type address: int
+        :param instance: Device Instance/Channel.
+        :type instance: int
+        :return: None
+        """
+        # Stop the Lookup Table process by writing 1 to ParID 52001
+        self.mecom_basic_cmd.set_int32_value(address=address, parameter_id=52001, instance=instance, value=1)
+
+    def get_current_table_line(self, address: int, instance: int) -> int:
+        """
+        Get the number of the currently executed Data Table line.
+        Only valid if the current "Lookup Table Status" is "Executing...".
+
+        :param address: Device Address. Use null to use the DefaultDeviceAddress
+            defined on MeComQuerySet.
+        :type address: int
+        :param instance: Device Instance/Channel.
+        :type instance: int
+        :return: None
+        :rtype: int
+        """
+        return self.mecom_basic_cmd.get_int32_value(address=address, parameter_id=52003, instance=instance)
+
+    def set_lookup_table_id(self, address: int, instance: int, table_id: int) -> None:
+        """
+        Select the Lookup Table part to be executed by passing the Table ID
+        defined in the Data Table.
+
+        :param address: Device Address. Use null to use the DefaultDeviceAddress
+            defined on MeComQuerySet.
+        :type address: int
+        :param instance: Device Instance/Channel.
+        :type instance: int
+        :param table_id: Lookup Table ID to be executed.
+        :type table_id: int
+        :return: None
+        """
+        self.mecom_basic_cmd.set_int32_value(address=address, parameter_id=52010, instance=instance, value=table_id)
+
+    def set_number_of_repetitions(self, address: int, instance: int, nr_of_repetitions: int) -> None:
+        """
+        Set the number of executions of the "REPEAT_MARK" elements.
+        See the Lookup Table definitions for more information about these elements.
+
+        :param address: Device Address. Use null to use the DefaultDeviceAddress
+            defined on MeComQuerySet.
+        :type address: int
+        :param instance: Device Instance/Channel.
+        :type instance: int
+        :param nr_of_repetitions: Amount of repetitions. Value Range: 0 ... 100'000.
+        :type nr_of_repetitions: int
+        :return: None
+        """
+        if 0 <= nr_of_repetitions <= 100_000:
+            self.mecom_basic_cmd.set_int32_value(address=address, parameter_id=52012, instance=instance,
+                                                 value=nr_of_repetitions)
+        else:
+            raise LutException("NrOfRepetitions value range is 0 ... 100_000!")
+
+    def _download_page(self, address: int, list_lut_record: List[LutRecord], page_offset: int) -> None:
         """
         Downloads a page of the lookup table to the device.
 
         :param address: Device Address. Use null to use the DefaultDeviceAddress
             defined on MeComQuerySet.
-        :type address: bytes
+        :type address: int
         :param list_lut_record: List of LutG1Records for the page.
         :type list_lut_record: List[LutRecord]
         :param page_offset: The offset of the page.
         :type page_offset: int
         :return: None
         """
+        mecom_var_convert = MeComVarConvert()
         try:
+            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame.payload = (
+                mecom_var_convert.add_string(tx_frame.payload, "?LT")
+            )  # Start payload with Lookup Table command, '?LT' is used for write and read
+            tx_frame.payload = (
+                mecom_var_convert.add_uint4(tx_frame.payload, 2)
+            )  # 0 = Status Query, 1 = Program, 2 = Do Analyze
+            tx_frame.payload = mecom_var_convert.add_uint32(tx_frame.payload, page_offset)  # Lookup Table Page Offset
+
+            # Add bytearray generated from List[LutRecord]
             count = len(list_lut_record)
             lut_record_bytearray = bytearray(b"")
             for i in range(count):
                 lut_record_bytearray.extend(list_lut_record[i].get_bytes())
+            tx_frame.payload = mecom_var_convert.add_byte_array(stream=tx_frame.payload, value=lut_record_bytearray)
 
-            # Create MeFrame with Payload
-            lt = self.mecom.program_lut(page_offset=page_offset, lut_record_bytearray=lut_record_bytearray)
+            # Fill the rest of the payload with UINT4 bytes with the value '0' up
+            # until the payload is 524 UINT4 bytes long. This is so that the payload
+            # is always 256 UINT8 bytes large when sent to the device.
+            payload_length = len(tx_frame.payload)
+            if payload_length < 524:
+                for i in range(524 - payload_length):
+                    tx_frame.payload = mecom_var_convert.add_uint4(tx_frame.payload, value=0)
 
             timeout: int = 0
             while True:
-                status = lt.RESPONSE.PAYLOAD
+                rx_frame = self.mequery_set.set(tx_frame=tx_frame)
+                status = mecom_var_convert.read_uint4(rx_frame.payload)
+
                 if status != LUT_FLASH_STATUS_DATA_ACCEPTED:
                     # Manage device busy
                     timeout += 1
@@ -232,13 +247,12 @@ class LutCmd(object):
         except LutException as e:
             raise LutException(f"DownloadPage failed: Address {address}; Detail: {e}")
 
-    def _start_analyze_and_wait(self, address: bytes) -> None:
+    def _start_analyze_and_wait(self, address: int) -> None:
         """
-
 
         :param address: Device Address. Use null to use the DefaultDeviceAddress
             defined on MeComQuerySet.
-        :type address: bytes
+        :type address: int
         :return: None
         """
         timeout: int = 0
@@ -273,7 +287,6 @@ class LutCmd(object):
 
     def _calc_crc(self, crc: int, record: LutRecord) -> int:
         """
-
 
         :param crc: CRC to use as base for the calculation.
         :type crc: int
@@ -329,11 +342,11 @@ class LutCmd(object):
             list_.append(list_input[i:i + min(max_list_size, count - i)])
         return list_
 
-    def _parse_lut_into_list(self, reader) -> List[LutRecord]:
+    def _parse_lut_into_list(self, reader: str) -> List[LutRecord]:
         """
 
         :param reader:
-        :type reader:
+        :type reader: str
         :return:
         :rtype: List[LutRecord]
         """
@@ -469,15 +482,12 @@ class LutCmd(object):
 
 
 if __name__ == "__main__":
-    mecom = instruments.meerstetter.pyMeCom.mecom.mecom.MeCom(serialport="COM9", timeout=1)
+    phy_com = MeComPhySerialPort()
+    phy_com.connect(port_name="COM9")
 
-    address_ = mecom.identify()
+    mequery_set = MeComQuerySet(phy_com=phy_com)
 
-    serial_number_int = mecom.get_parameter(parameter_name="Serial Number", address=address_,
-                                            parameter_instance=1)
-    print(f"serial_number_int : {serial_number_int}")
-
-    lut_cmd = LutCmd(mecom_instance=mecom)
+    lut_cmd = LutCmd(mecom_query_set=mequery_set)
 
     # records_ = lut_cmd._parse_lut_into_list(reader="LookupTable Sine ramp_0.1_degC_per_sec.csv")
     # print("Pause...")
@@ -486,4 +496,10 @@ if __name__ == "__main__":
     # print(lut_cmd._split_list(list_input=records_, max_list_size=32))
     # print("Done...")
 
-    lut_cmd.download_lookup_table(address=address_, filepath="LookupTable Sine ramp_0.1_degC_per_sec.csv")
+    lut_cmd.download_lookup_table(address=2, filepath="LookupTable Sine ramp_0.1_degC_per_sec.csv")
+
+    status: LutStatus = lut_cmd.get_status(address=2, instance=1)
+
+    print("Pause...")
+
+    phy_com.tear()

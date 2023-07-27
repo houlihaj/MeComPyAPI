@@ -46,7 +46,7 @@ class MeComVarConvert:
         stream += value
         return stream
 
-    def add_uint4(self, stream: str, value: int) -> None:
+    def add_uint4(self, stream: str, value: int) -> str:
         """
         Writes a UINT4 (byte range 0-15) to the stream.
 
@@ -54,9 +54,12 @@ class MeComVarConvert:
         :type stream: str
         :param value: Value to be added.
         :type value: int
-        :return: None
+        :return:
+        :rtype: str
         """
-        raise NotImplementedError
+        # NEEDS TESTING!!!
+        stream += "{:01X}".format(value)
+        return stream
 
     def add_int8(self, stream: str, value: int) -> str:
         """
@@ -162,14 +165,14 @@ class MeComVarConvert:
         stream += "{:16X}".format(value)
         return stream
 
-    def add_float32(self, stream: str, value: int) -> str:
+    def add_float32(self, stream: str, value: float) -> str:
         """
         Writes a FLOAT32 (.net float) to the stream.
 
         :param stream: Writes data to this stream.
         :type stream: str
         :param value: Value to be added.
-        :type value: int
+        :type value: float
         :return:
         :rtype: str
         """
@@ -202,17 +205,20 @@ class MeComVarConvert:
         """
         raise NotImplementedError
 
-    def add_byte_array(self, stream, value: List[bytes]) -> None:
+    def add_byte_array(self, stream: str, value: bytearray) -> str:
         """
         Writes each byte in the array to the stream.
 
         :param stream: Writes data to this stream.
-        :type stream:
+        :type stream: str
         :param value: Value to be added.
-        :type value: List[bytes]
-        :return: None
+        :type value: bytearray
+        :return:
+        :rtype: str
         """
-        raise NotImplementedError
+        for byte in value:
+            stream = self.add_uint8(stream=stream, value=byte)
+        return stream
 
     def convert_to_hex(self, value: int):
         """
@@ -267,8 +273,10 @@ class MeComVarConvert:
         :return: The read and converted value.
         :rtype: str
         """
-        # NEEDS TESTING!!!
-        rsp_format = "!c"
+        stream_int = int(stream)
+        stream = "{:02X}".format(stream_int)
+
+        rsp_format = "!B"
         return unpack(rsp_format, bytes.fromhex(stream))[0]
 
     def read_uint8(self, stream: str) -> int:

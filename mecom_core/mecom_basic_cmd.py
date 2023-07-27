@@ -2,15 +2,11 @@ from mecom_core.com_command_exception import ComCommandException
 from mecom_core.mecom_frame import MeComPacket
 from mecom_core.mecom_query_set import MeComQuerySet
 from mecom_core.mecom_var_convert import MeComVarConvert
-from phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
 
 
 class MeComBasicCmd:
-    def __init__(self):
-        self.phy_com = MeComPhySerialPort()
-        self.phy_com.connect(port_name="COM9")
-
-        self.mequery_set = MeComQuerySet(phy_com=self.phy_com)
+    def __init__(self, mequery_set: MeComQuerySet):
+        self.mequery_set = mequery_set
 
         # self.address = self.get_device_address()
 
@@ -211,7 +207,7 @@ class MeComBasicCmd:
         """
         raise NotImplementedError
 
-    def set_float_value(self, address: int, parameter_id: int, instance: int, value: int):
+    def set_float_value(self, address: int, parameter_id: int, instance: int, value: float):
         """
         Sets a float 32Bit value to the device.
 
@@ -222,10 +218,21 @@ class MeComBasicCmd:
         :param instance: Parameter Instance. (usually 1)
         :type instance: int
         :param value: Vale to set.
-        :type value: int
+        :type value: float
         :raises ComCommandException: When the command fails. Check the inner exception for details.
         """
-        raise NotImplementedError
+        mecom_var_convert = MeComVarConvert()
+        try:
+            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "VS")
+            tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
+            tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
+            tx_frame.payload = mecom_var_convert.add_float32(tx_frame.payload, value)
+            rx_frame = self.mequery_set.set(tx_frame=tx_frame)
+            return rx_frame
+
+        except Exception as e:
+            raise ComCommandException(f"Set FLOAT Value failed: {e}")
 
     def set_double_value(self, address: int, parameter_id: int, instance: int, value: int):
         """
