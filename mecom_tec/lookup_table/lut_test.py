@@ -10,7 +10,7 @@ from mecom_core.mecom_query_set import MeComQuerySet
 from mecom_core.com_command_exception import ComCommandException
 
 
-class LutTest(object):
+class LutTest:
     def __init__(self):
         phy_com = MeComPhySerialPort()
         phy_com.connect(port_name="COM9")

@@ -11,7 +11,7 @@ class LutRecord(object):
 
     def __init__(self):
         # Instruction value
-        self.instruction = 0  # type: int
+        self._instruction = 0  # type: int
         # First field value
         self._field1 = 0  # type: int
         # First field value split into three bytes
@@ -21,9 +21,25 @@ class LutRecord(object):
         # Instruction combined with Field1 in a 32-bit int
         self._instruction_and_field_1 = 0  # type: int
         # Second field value is an integer (use Field2Float to store a float)
-        self.field2_int = 0  # type: int
+        self._field2_int = 0  # type: int
+        # Second field int value split into four bytes
+        self._field2_int_b0: int = self.field2_int & 0x000000FF
+        self._field2_int_b1: int = (self.field2_int & 0x0000FF00) >> 8
+        self._field2_int_b2: int = (self.field2_int & 0x00FF0000) >> 16
+        self._field2_int_b3: int = (self.field2_int & 0xFF000000) >> 24
         # Second field value is a float (use Field2Int to store an int)
         self.field2_float = 0  # type: float
+
+    @property
+    def instruction(self):
+        return self._instruction
+
+    @instruction.setter
+    def instruction(self, new_value):
+        self._instruction = new_value
+        self._instruction_and_field_1 = (
+            int(self.instruction | self._field1b0 << 8 | self._field1b1 << 16 | self._field1b2 << 24)
+        )
 
     @property
     def field1(self):
@@ -36,6 +52,10 @@ class LutRecord(object):
         self._field1b1: int = (self.field1 & 0x00FF00) >> 8
         self._field1b2: int = (self.field1 & 0xFF0000) >> 16
 
+        self._instruction_and_field_1 = (
+            int(self._instruction | self._field1b0 << 8 | self._field1b1 << 16 | self._field1b2 << 24)
+        )
+
     @property
     def field1b0(self):
         return self._field1b0
@@ -43,7 +63,37 @@ class LutRecord(object):
     @field1b0.setter
     def field1b0(self, new_value):
         self._field1b0 = new_value
-        self._field1 = int(self._field1b0 | self._field1b1 << 8 | self._field1b2 << 16)
+        self._field1 = int(self.field1b0 | self._field1b1 << 8 | self._field1b2 << 16)
+
+    @property
+    def field1b1(self):
+        return self._field1b1
+
+    @field1b1.setter
+    def field1b1(self, new_value):
+        self._field1b1 = new_value
+        self._field1 = int(self._field1b0 | self.field1b1 << 8 | self._field1b2 << 16)
+
+    @property
+    def field1b2(self):
+        return self._field1b2
+
+    @field1b2.setter
+    def field1b2(self, new_value):
+        self._field1b2 = new_value
+        self._field1 = int(self._field1b0 | self._field1b1 << 8 | self.field1b2 << 16)
+
+    @property
+    def field2_int(self):
+        return self._field2_int
+
+    @field2_int.setter
+    def field2_int(self, new_value):
+        self._field2_int = new_value
+        self._field2_int_b0: int = self.field2_int & 0x000000FF
+        self._field2_int_b1: int = (self.field2_int & 0x0000FF00) >> 8
+        self._field2_int_b2: int = (self.field2_int & 0x00FF0000) >> 16
+        self._field2_int_b3: int = (self.field2_int & 0xFF000000) >> 24
 
     def get_int_array(self) -> List[int]:
         """
@@ -68,7 +118,14 @@ class LutRecord(object):
         bytearray_.append(self._field1b0)
         bytearray_.append(self._field1b1)
         bytearray_.append(self._field1b2)
-        bytearray_.append(self.field2_int)
+
+        # bytearray_.append(self.field2_int)
+
+        bytearray_.append(self._field2_int_b0)
+        bytearray_.append(self._field2_int_b1)
+        bytearray_.append(self._field2_int_b2)
+        bytearray_.append(self._field2_int_b3)
+        
         return bytearray_
 
     def set_bytes(self, buffer: bytearray):

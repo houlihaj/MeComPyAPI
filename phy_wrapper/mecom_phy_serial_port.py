@@ -104,6 +104,8 @@ class MeComPhySerialPort(IntMeComPhy):
         self.ser.reset_output_buffer()
         self.ser.reset_input_buffer()
 
+        stream_bytes = stream.encode()
+
         # send query
         self.ser.write(stream.encode())
 

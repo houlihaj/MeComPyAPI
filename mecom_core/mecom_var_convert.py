@@ -264,14 +264,14 @@ class MeComVarConvert:
         """
         raise NotImplementedError
 
-    def read_uint4(self, stream) -> bytes:
+    def read_uint4(self, stream: str) -> int:
         """
         Reads a UINT4 (byte range 0-15) from the stream.
 
         :param stream: Stream where the value is read from.
-        :type stream:
+        :type stream: str
         :return: The read and converted value.
-        :rtype: str
+        :rtype: int
         """
         stream_int = int(stream)
         stream = "{:02X}".format(stream_int)

@@ -45,17 +45,11 @@ class LutCmd(object):
         # Get all records from the CSV file, enumerate them and put them in a list
         records: List[LutRecord] = self._parse_lut_into_list(reader=filepath)
 
-        print("Pause...")
-
         # Calculate the CRC over all records in the list and add it to Field2 of the EOF record
         self._add_crc_to_table(records=records)
 
-        print("Pause 1...")
-
         # Split the list into separate lists holding 32 entries each
         lists = self._split_list(list_input=records, max_list_size=32)
-
-        print("Pause 2...")
 
         # Create a payload for each list of records and send them to the device
         for list_ in lists:
@@ -92,9 +86,36 @@ class LutCmd(object):
             # 2 = New Data accepted
             # 3 = Error
             status = mecom_var_convert.read_uint4(rx_frame.payload)
+            print(f"?LT Do Analyze Server Response : {status}")
             return status == LUT_FLASH_STATUS_IDLE
         except LutException as e:
             raise LutException(f"Lookup table test failed: Address: {address}; Detail: {e}")
+
+    def get_lut_status_query(self, address: int) -> int:
+        """
+
+        :param address: Device Address. Use null to use the DefaultDeviceAddress
+            defined on MeComQuerySet.
+        :type address: int
+        :raises LutException:
+        :return:
+        :rtype: int
+        """
+        mecom_var_convert = MeComVarConvert()
+        try:
+            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame.payload = (
+                mecom_var_convert.add_string(tx_frame.payload, "?LT")
+            )  # Start payload with Lookup Table command, '?LT' is used for write and read
+            tx_frame.payload = (
+                mecom_var_convert.add_uint4(tx_frame.payload, 0)
+            )  # 0 = Status Query, 1 = Program, 2 = Do Analyze
+
+            rx_frame = self.mequery_set.set(tx_frame=tx_frame)
+            status = mecom_var_convert.read_uint4(rx_frame.payload)
+            return status
+        except LutException as e:
+            raise LutException(f"Get Lookup Table Status Query failed: Address: {address}; Detail: {e}")
 
     def get_status(self, address: int, instance: int) -> LutStatus:
         """
@@ -210,7 +231,7 @@ class LutCmd(object):
                 mecom_var_convert.add_string(tx_frame.payload, "?LT")
             )  # Start payload with Lookup Table command, '?LT' is used for write and read
             tx_frame.payload = (
-                mecom_var_convert.add_uint4(tx_frame.payload, 2)
+                mecom_var_convert.add_uint4(tx_frame.payload, 1)
             )  # 0 = Status Query, 1 = Program, 2 = Do Analyze
             tx_frame.payload = mecom_var_convert.add_uint32(tx_frame.payload, page_offset)  # Lookup Table Page Offset
 
@@ -233,6 +254,7 @@ class LutCmd(object):
             while True:
                 rx_frame = self.mequery_set.set(tx_frame=tx_frame)
                 status = mecom_var_convert.read_uint4(rx_frame.payload)
+                print(f"?LT Program Server Response : {status}")
 
                 if status != LUT_FLASH_STATUS_DATA_ACCEPTED:
                     # Manage device busy
@@ -259,6 +281,7 @@ class LutCmd(object):
         while True:
             # Send LUT analyze query
             successfully_started = self.start_analyze_lut(address=address)
+            print(f"successfully_started : {successfully_started}")
             if successfully_started is not True:
                 timeout += 1
                 if timeout < 50:
@@ -362,8 +385,8 @@ class LutCmd(object):
                 if "Instruction;Field 1;Field 2" not in lines[0]:
                     raise LutException(f"The Title of the .csv file must be 'Instruction;Field 1;Field 2'")
                 line_count += 1
-            elif "EOF" in line:
-                break
+            # elif "EOF" in line:
+            #     break
             else:
                 record: LutRecord = self._enumerate_lut(line=line, line_count=line_count)
                 list_.append(record)
@@ -390,7 +413,7 @@ class LutCmd(object):
         
         record = LutRecord()
         # record.Field1(value=0).set()
-        record.field1 = 0
+        # record.field1 = 0
 
         try:
             if instruction == "TABLE_INFO":
@@ -416,7 +439,8 @@ class LutCmd(object):
                 else:
                     raise LutException(f"Error in Field1 Enumeration : {field1}")
                 record.field2_float = float(field2)
-            
+                # record.field2_int = int(field2)
+
             elif instruction == "REPEAT_MARK":
                 record.instruction = LUT_REPEAT_MARK_INSTR
                 if field1 == "START":
@@ -505,8 +529,10 @@ if __name__ == "__main__":
 
     lut_cmd.download_lookup_table(address=2, filepath="LookupTable Sine ramp_0.1_degC_per_sec.csv")
 
-    status: LutStatus = lut_cmd.get_status(address=2, instance=1)
+    lut_status_query = lut_cmd.get_lut_status_query(address=2)
+    print(f"lut_status_query : {lut_status_query}")
 
-    print("Pause...")
+    status_: LutStatus = lut_cmd.get_status(address=2, instance=1)
+    print(f"status_ : {status_}")
 
     phy_com.tear()

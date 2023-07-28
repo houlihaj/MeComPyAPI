@@ -122,8 +122,7 @@ class MeComFrame:
 
         tx_stream = mecom_var_convert.add_uint8(stream=tx_stream, value=tx_frame.address)
 
-        # tx_stream = mecom_var_convert.add_uint16(stream=tx_stream, value=tx_frame.sequence_number)
-        tx_stream = mecom_var_convert.add_uint16(stream=tx_stream, value=8)
+        tx_stream = mecom_var_convert.add_uint16(stream=tx_stream, value=tx_frame.sequence_number)
 
         tx_stream += tx_frame.payload
 
