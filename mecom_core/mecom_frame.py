@@ -4,7 +4,6 @@ from dataclasses import dataclass
 
 from PyCRC.CRCCCITT import CRCCCITT
 
-from phy_wrapper.int_mecom_phy import IntMeComPhy, MeComPhyInterfaceException
 from phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
 from mecom_core.mecom_var_convert import MeComVarConvert
 
@@ -135,8 +134,7 @@ class MeComFrame:
 
         self.phy_com.send_string(stream=tx_stream)
 
-    # def receive_frame_or_timeout(self) -> MeComPacket:
-    def receive_frame_or_timeout(self):
+    def receive_frame_or_timeout(self) -> MeComPacket:
         """
         Receives a correct frame or throws a timeout exception.
 

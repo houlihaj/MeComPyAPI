@@ -85,7 +85,7 @@ class MeComBasicCmd:
     # endregion
 
     # region Functions for ID Parameter system
-    def get_int32_value(self, address: int, parameter_id: int, instance: int):
+    def get_int32_value(self, address: int, parameter_id: int, instance: int) -> int:
         """
         Returns a signed int 32Bit value from the device.
 
@@ -97,7 +97,7 @@ class MeComBasicCmd:
         :type instance: int
         :raises ComCommandException: When the command fails. Check the inner exception for details.
         :return: Returned value.
-        :rtype:
+        :rtype: int
         """
         mecom_var_convert = MeComVarConvert()
         try:
@@ -307,21 +307,22 @@ if __name__ == "__main__":
 
     mecom_basic_cmd = MeComBasicCmd(mequery_set=mequery_set_)
 
-    # # "send_string" and "get_data_or_timeout" work
-    # mecom_basic_cmd.phy_com.send_string(stream="#000008?IF018868\r")
-    # rsp_frame = mecom_basic_cmd.phy_com.get_data_or_timeout()
-    # print(rsp_frame)
-
     identify = mecom_basic_cmd.get_ident_string(address=2, channel=1)
     print(f"identify : {identify}")
+    print(f"type(identify) : {type(identify)}")
+    print("\n", end="")
 
     device_type = mecom_basic_cmd.get_int32_value(address=2, parameter_id=100,
                                                   instance=1)  # parameter_name : "Device Type"
     print(f"device_type : {device_type}")
+    print(f"type(device_type) : {type(device_type)}")
+    print("\n", end="")
 
     object_temperature = mecom_basic_cmd.get_float_value(address=2, parameter_id=1000,
                                                          instance=1)  # parameter_name : "Object Temperature"
     print(f"object_temperature : {object_temperature}")
+    print(f"type(object_temperature) : {type(object_temperature)}")
+    print("\n", end="")
 
     phy_com.tear()
     print("Done...")

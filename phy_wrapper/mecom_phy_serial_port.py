@@ -137,9 +137,6 @@ class MeComPhySerialPort(IntMeComPhy):
                 response_frame += response_byte
                 response_byte = self._read(size=1)
 
-            # # strip source byte (! or #, but for a response always !)
-            # response_frame = response_frame[1:]
-
             return response_frame.decode()
 
         except SerialTimeoutException as e:

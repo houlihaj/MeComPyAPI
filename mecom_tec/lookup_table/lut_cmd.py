@@ -1,8 +1,5 @@
 import time
-import csv
 from typing import List
-
-from PyCRC.CRCCCITT import CRCCCITT
 
 from lut_record import LutRecord
 from lut_status import LutStatus
@@ -294,7 +291,6 @@ class LutCmd(object):
     def _add_crc_to_table(self, records: List[LutRecord]) -> None:
         """
 
-
         :param records:
         :type records: List[LutRecord]
         :return: None
@@ -385,14 +381,10 @@ class LutCmd(object):
                 if "Instruction;Field 1;Field 2" not in lines[0]:
                     raise LutException(f"The Title of the .csv file must be 'Instruction;Field 1;Field 2'")
                 line_count += 1
-            # elif "EOF" in line:
-            #     break
             else:
                 record: LutRecord = self._enumerate_lut(line=line, line_count=line_count)
                 list_.append(record)
                 line_count += 1
-
-        print(list_)
 
         return list_
 
@@ -412,8 +404,6 @@ class LutCmd(object):
         field2 = buffer[2]
         
         record = LutRecord()
-        # record.Field1(value=0).set()
-        # record.field1 = 0
 
         try:
             if instruction == "TABLE_INFO":

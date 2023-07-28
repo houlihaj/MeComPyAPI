@@ -13,7 +13,7 @@ class LutRecord(object):
     def __init__(self):
         # Instruction value
         self._instruction = 0  # type: int
-        
+
         # First field value
         self._field1 = 0  # type: int
         # First field value split into three bytes

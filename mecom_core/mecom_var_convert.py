@@ -57,7 +57,6 @@ class MeComVarConvert:
         :return:
         :rtype: str
         """
-        # NEEDS TESTING!!!
         stream += "{:01X}".format(value)
         return stream
 
@@ -315,14 +314,14 @@ class MeComVarConvert:
         rsp_format = "!H"
         return unpack(rsp_format, bytes.fromhex(stream))[0]
 
-    def read_int32(self, stream: str) -> str:
+    def read_int32(self, stream: str) -> int:
         """
         Reads a INT32 from the stream.
 
         :param stream: Stream where the value is read from.
         :type stream: str
         :return: The read and converted value.
-        :rtype: str
+        :rtype: int
         """
         rsp_format = "!i"
         return unpack(rsp_format, bytes.fromhex(stream))[0]
@@ -339,14 +338,14 @@ class MeComVarConvert:
         rsp_format = "!I"
         return unpack(rsp_format, bytes.fromhex(stream))[0]
 
-    def read_float32(self, stream) -> bytes:
+    def read_float32(self, stream) -> float:
         """
         Reads a FLOAT32 (.net float) from the stream.
 
         :param stream: Stream where the value is read from.
         :type stream:
         :return: The read and converted value.
-        :rtype: str
+        :rtype: float
         """
         rsp_format = "!f"
         return unpack(rsp_format, bytes.fromhex(stream))[0]
