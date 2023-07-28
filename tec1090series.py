@@ -3,15 +3,20 @@ import datetime
 import time
 import statistics
 from enum import Enum
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Optional
 from serial import SerialException
 
-from mecom_core.com_command_exception import ComCommandException
 from mecom_core.mecom_frame import MeComPacket
 from mecom_core.mecom_query_set import MeComQuerySet
 from mecom_core.mecom_var_convert import MeComVarConvert
 from mecom_core.mecom_basic_cmd import MeComBasicCmd
+from mecom_core.com_command_exception import ComCommandException
+
 from phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
+
+from mecom_tec.lookup_table.lut_cmd import LutCmd
+from mecom_tec.lookup_table.lut_status import LutStatus
+from mecom_tec.lookup_table.lut_exception import LutException
 
 
 class TemperatureStability(Enum):
@@ -89,26 +94,31 @@ class MeerstetterTEC(object):
     ./meerstetter/pyMeCom/mecom/commands.py
     """
     def __init__(self, *args, **kwargs) -> None:
-        # phy_com = MeComPhySerialPort()
-        # phy_com.connect(port_name="COM9")
-        # mequery_set_ = MeComQuerySet(phy_com=phy_com)
-        # mecom_basic_cmd = MeComBasicCmd(mequery_set=mequery_set_)
-
         self.phy_com = MeComPhySerialPort()
-        self.mequery_set = None
-        self.mecom_basic_cmd = None
-        self.instance = None
+        self.mequery_set = None  # type: Optional[MeComQuerySet]
+        self.mecom_basic_cmd = None  # type: Optional[MeComBasicCmd]
+        self.mecom_lut_cmd = None  # type: Optional[LutCmd]
+        self.address = None  # type: Optional[int]
+        self.instance = None  # type: Optional[int]
 
-    def connect(self, port: str = "COM9", instance: int = 1):
+    def connect(self, port: str = "COM9", address: int = 2, instance: int = 1):
         """
+        Connects to a serial port. On Windows, these are typically 'COMX' where X is the number of the port. In Linux,
+        they are often /dev/ttyXXXY where XXX usually indicates if it is a serial or USB port, and Y indicates the
+        number. E.g. /dev/ttyUSB0 on Linux and 'COM7' on Windows
 
-        :return:
+        :param: Port, as described in description
+        :type: str
+        :param:
+        :type: int
+        :return: None
         """
-        self.instance = instance
-
         self.phy_com.connect(port_name=port)
         mequery_set = MeComQuerySet(phy_com=self.phy_com)
         self.mecom_basic_cmd = MeComBasicCmd(mequery_set=mequery_set)
+        self.mecom_lut_cmd = LutCmd(mecom_query_set=mequery_set)
+        self.address = address
+        self.instance = instance
 
     def tear(self):
         """
@@ -125,7 +135,7 @@ class MeerstetterTEC(object):
         :rtype: int
         """
         logging.debug(f"get device type for channel {self.instance}")
-        device_type = self.mecom_basic_cmd.get_int32_value(address=2, parameter_id=100,
+        device_type = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=100,
                                                            instance=self.instance)
         return device_type
 
@@ -137,7 +147,7 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get object temperature for channel {self.instance}")
-        object_temperature = self.mecom_basic_cmd.get_float_value(address=2, parameter_id=1000,
+        object_temperature = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1000,
                                                                   instance=self.instance)
         return object_temperature
 
@@ -148,13 +158,60 @@ class MeerstetterTEC(object):
         :return: The firmware identification string of the device.
         :rtype: str
         """
-        identify = self.mecom_basic_cmd.get_ident_string(address=2, channel=self.instance)
+        identify = self.mecom_basic_cmd.get_ident_string(address=self.address, channel=self.instance)
         return identify
+
+    def download_lookup_table(self) -> None:
+        """
+
+        :return: None
+        """
+        filepath = "LookupTable Sine ramp_0.1_degC_per_sec.csv"  # Need to update with correct path
+
+        # Enter the path to the lookup table file (*.csv)
+        try:
+            self.mecom_lut_cmd.download_lookup_table(address=self.address, filepath=filepath)
+            timeout: int = 0
+            while True:
+                status: LutStatus = self.mecom_lut_cmd.get_status(address=self.address, instance=self.instance)
+                print(f"LutCmd status : {status}")
+                if status == LutStatus.NO_INIT or status == LutStatus.ANALYZING:
+                    timeout += 1
+                    if timeout < 50:
+                        time.sleep(0.010)
+                    else:
+                        raise LutException("Timeout while trying to get Lookup Table status!")
+                else:
+                    break
+            lut_table_status = self.mecom_lut_cmd.get_status(address=self.address, instance=self.instance)
+            print(f"Lookup Table Status (52002): {lut_table_status}")
+        except LutException as e:
+            raise LutException(f"Error while trying to download lookup table: {e}")
+
+    def start_lookup_table(self) -> None:
+        """
+
+        :return: None
+        """
+        try:
+            self.mecom_lut_cmd.start_lookup_table(address=self.address, instance=self.instance)
+        except LutException as e:
+            raise ComCommandException(f"start_lookup_table failed: Detail: {e}")
+
+    def stop_lookup_table(self) -> None:
+        """
+
+        :return: None
+        """
+        try:
+            self.mecom_lut_cmd.stop_lookup_table(address=self.address, instance=self.instance)
+        except LutException as e:
+            raise ComCommandException(f"stop_lookup_table failed: Detail: {e}")
 
 
 if __name__ == "__main__":
     mc = MeerstetterTEC()
-    mc.connect(port="COM9", instance=1)
+    mc.connect(port="COM9", address=2, instance=1)
 
     print(mc.get_firmware_identification_string())
     print(type(mc.get_firmware_identification_string()))
