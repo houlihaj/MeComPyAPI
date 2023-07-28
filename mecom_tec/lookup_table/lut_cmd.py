@@ -419,10 +419,8 @@ class LutCmd(object):
             if instruction == "TABLE_INFO":
                 record.instruction = LUT_TABLE_INFO_INSTR
                 if field1 == "START":
-                    # record.Field1(value=LUT_TABLE_INFO_F1_START).set()
                     record.field1 = LUT_TABLE_INFO_F1_START
                 elif field1 == "END":
-                    # record.Field1(value=LUT_TABLE_INFO_F1_END).set()
                     record.field1 = LUT_TABLE_INFO_F1_END
                 else:
                     raise LutException(f"Error in Field1 Enumeration : {field1}")
@@ -431,23 +429,18 @@ class LutCmd(object):
             elif instruction == "SIN_RAMP_TO":
                 record.instruction = LUT_SIN_RAMP_TO_INSTR
                 if field1 == "FROM_ACT":
-                    # record.Field1(value=LUT_SIN_RAMP_TO_F1_FROM_ACT).set()
                     record.field1 = LUT_SIN_RAMP_TO_F1_FROM_ACT
                 elif field1 == "FROM_NOM":
-                    # record.Field1(value=LUT_SIN_RAMP_TO_F1_FROM_NOM).set()
                     record.field1 = LUT_SIN_RAMP_TO_F1_FROM_NOM
                 else:
                     raise LutException(f"Error in Field1 Enumeration : {field1}")
                 record.field2_float = float(field2)
-                # record.field2_int = int(field2)
 
             elif instruction == "REPEAT_MARK":
                 record.instruction = LUT_REPEAT_MARK_INSTR
                 if field1 == "START":
-                    # record.Field1(value=LUT_REPEAT_MARK_F1_START).set()
                     record.field1 = LUT_REPEAT_MARK_F1_START
                 elif field1 == "END":
-                    # record.Field1(value=LUT_REPEAT_MARK_F1_END).set()
                     record.field1 = LUT_REPEAT_MARK_F1_END
                 else:
                     raise LutException(f"Error in Field1 Enumeration : {field1}")
@@ -456,17 +449,14 @@ class LutCmd(object):
                 record.instruction = LUT_LIN_RAMP_TIME_INSTR
                 f1_temp = int(field1)
                 if 10 >= f1_temp >= 16_777_216:
-                    # record.Field1(value=f1_temp).set()
                     record.field1 = f1_temp
                 record.field2_float = float(field2)
             
             elif instruction == "STATUS":
                 record.instruction = LUT_STATUS_INSTR
                 if field1 == "DISABLE":
-                    # record.Field1(value=LUT_STATUS_F1_DISABLE).set()
                     record.field1 = LUT_STATUS_F1_DISABLE
                 elif field1 == "ENABLE":
-                    # record.Field1(value=LUT_STATUS_F1_ENABLE).set()
                     record.field1 = LUT_STATUS_F1_ENABLE
                 else:
                     raise LutException(f"Error in Field1 Enumeration : {field1}")
@@ -474,10 +464,8 @@ class LutCmd(object):
             elif instruction == "WAIT":
                 record.instruction = LUT_WAIT_INSTR
                 if field1 == "FOREVER":
-                    # record.Field1(value=LUT_WAIT_F1_FOREVER).set()
                     record.field1 = LUT_WAIT_F1_FOREVER
                 elif field1 == "TIME":
-                    # record.Field1(value=LUT_WAIT_F1_TIME).set()
                     record.field1 = LUT_WAIT_F1_TIME
                     f2_temp = int(field2)
                     if f2_temp >= 0:
@@ -487,7 +475,6 @@ class LutCmd(object):
                 record.instruction = LUT_SET_FLOAT_INSTR
                 f1temp_1 = int(field1)  # need to confirm operation
                 if 0 <= f1temp_1 <= 16_777_216:
-                    # record.Field1(value=f1temp_1).set()  # need to confirm operation
                     record.field1 = f1temp_1  # need to confirm operation
                 record.field2_int = int(field2)  # need to confirm operation
             
@@ -495,7 +482,6 @@ class LutCmd(object):
                 record.instruction = LUT_SET_INT_INSTR
                 f1temp_2 = int(field1)  # need to confirm operation
                 if 0 <= f1temp_2 <= 16_777_216:
-                    # record.Field1(value=f1temp_2).set()  # need to confirm operation
                     record.field1 = f1temp_2  # need to confirm operation
                 record.field2_int = int(field2)  # need to confirm operation
                 

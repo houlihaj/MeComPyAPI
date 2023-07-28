@@ -1,4 +1,5 @@
 from typing import List
+from struct import pack
 
 
 class LutRecord(object):
@@ -12,6 +13,7 @@ class LutRecord(object):
     def __init__(self):
         # Instruction value
         self._instruction = 0  # type: int
+        
         # First field value
         self._field1 = 0  # type: int
         # First field value split into three bytes
@@ -20,6 +22,15 @@ class LutRecord(object):
         self._field1b2: int = (self.field1 & 0xFF0000) >> 16
         # Instruction combined with Field1 in a 32-bit int
         self._instruction_and_field_1 = 0  # type: int
+
+        # Second field value is an integer or float
+        self._field2 = 0  # type: int
+        # Second field value split into four bytes
+        self._field2_b0 = 0  # type: int
+        self._field2_b1 = 0  # type: int
+        self._field2_b2 = 0  # type: int
+        self._field2_b3 = 0  # type: int
+
         # Second field value is an integer (use Field2Float to store a float)
         self._field2_int = 0  # type: int
         # Second field int value split into four bytes
@@ -27,8 +38,14 @@ class LutRecord(object):
         self._field2_int_b1: int = (self.field2_int & 0x0000FF00) >> 8
         self._field2_int_b2: int = (self.field2_int & 0x00FF0000) >> 16
         self._field2_int_b3: int = (self.field2_int & 0xFF000000) >> 24
+
         # Second field value is a float (use Field2Int to store an int)
-        self.field2_float = 0  # type: float
+        self._field2_float = 0  # type: float
+        # Second field float value split into four bytes
+        self._field2_float_b0 = 0  # type: int
+        self._field2_float_b1 = 0  # type: int
+        self._field2_float_b2 = 0  # type: int
+        self._field2_float_b3 = 0  # type: int
 
     @property
     def instruction(self):
@@ -95,6 +112,37 @@ class LutRecord(object):
         self._field2_int_b2: int = (self.field2_int & 0x00FF0000) >> 16
         self._field2_int_b3: int = (self.field2_int & 0xFF000000) >> 24
 
+        self._field2 = self.field2_int
+
+        self._field2_b0 = self._field2_int_b0
+        self._field2_b1 = self._field2_int_b1
+        self._field2_b2 = self._field2_int_b2
+        self._field2_b3 = self._field2_int_b3
+
+    @property
+    def field2_float(self):
+        return self._field2_float
+
+    @field2_float.setter
+    def field2_float(self, new_value):
+        self._field2_float = new_value
+
+        bytes_ = pack('f', self.field2_float)
+
+        self._field2_float_b0: int = bytes_[0]
+        self._field2_float_b1: int = bytes_[1]
+        self._field2_float_b2: int = bytes_[2]
+        self._field2_float_b3: int = bytes_[3]
+
+        self._field2 = (
+            int(self._field2_float_b0 | self._field2_float_b1 << 8 | self._field2_float_b2 << 16 | self._field2_float_b3 << 24)
+        )
+
+        self._field2_b0 = self._field2_float_b0
+        self._field2_b1 = self._field2_float_b1
+        self._field2_b2 = self._field2_float_b2
+        self._field2_b3 = self._field2_float_b3
+
     def get_int_array(self) -> List[int]:
         """
         An int array that contains the Instruction (8-bit) combined with
@@ -103,7 +151,7 @@ class LutRecord(object):
         :return: LutG1Record split into two 32-bit int parts.
         :rtype: List[int]
         """
-        return [self._instruction_and_field_1, self.field2_int]
+        return [self._instruction_and_field_1, self._field2]
 
     def get_bytes(self) -> bytearray:
         """
@@ -119,12 +167,10 @@ class LutRecord(object):
         bytearray_.append(self._field1b1)
         bytearray_.append(self._field1b2)
 
-        # bytearray_.append(self.field2_int)
-
-        bytearray_.append(self._field2_int_b0)
-        bytearray_.append(self._field2_int_b1)
-        bytearray_.append(self._field2_int_b2)
-        bytearray_.append(self._field2_int_b3)
+        bytearray_.append(self._field2_b0)
+        bytearray_.append(self._field2_b1)
+        bytearray_.append(self._field2_b2)
+        bytearray_.append(self._field2_b3)
         
         return bytearray_
 

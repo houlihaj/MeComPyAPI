@@ -107,7 +107,7 @@ class MeComPhySerialPort(IntMeComPhy):
         stream_bytes = stream.encode()
 
         # send query
-        self.ser.write(stream.encode())
+        self.ser.write(stream_bytes)
 
         # flush write cache
         self.ser.flush()
