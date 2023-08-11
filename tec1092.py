@@ -1,6 +1,6 @@
 import logging
 
-from .tec1090series import MeerstetterTEC
+from tec1090series import MeerstetterTEC
 
 
 class MeerstetterTEC1092(MeerstetterTEC):

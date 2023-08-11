@@ -1,10 +1,10 @@
 import time
 from typing import List
 
-from lut_record import LutRecord
-from lut_status import LutStatus
-from lut_exception import LutException
-from lut_constants import *
+from mecom_tec.lookup_table.lut_record import LutRecord
+from mecom_tec.lookup_table.lut_status import LutStatus
+from mecom_tec.lookup_table.lut_exception import LutException
+from mecom_tec.lookup_table.lut_constants import *
 
 from mecom_core.mecom_query_set import MeComQuerySet
 from mecom_core.mecom_var_convert import MeComVarConvert

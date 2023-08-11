@@ -127,6 +127,22 @@ class MeerstetterTEC(object):
         """
         self.phy_com.tear()
 
+    def get_id(self) -> str:
+        """
+        Query the Identification String of the device.
+
+        :return: The identification string for the device. The string is comma separated and contains
+            the follow components in order: Make, Model, Serial Number, Hardware Version, and Firmware
+            Version.
+        :rtype: str
+        """
+        model = self.get_device_type()
+        sn = self.get_serial_number()
+        hw = self.get_hardware_version()
+        fw = self.get_firmware_version()
+        identity = f"Meerstetter,TEC{model},{sn},{hw},{fw}"
+        return identity
+
     def get_device_type(self) -> int:
         """
         Query the device type (Ex. 1090, 1091, 1092, etc.).
@@ -138,6 +154,55 @@ class MeerstetterTEC(object):
         device_type = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=100,
                                                            instance=self.instance)
         return device_type
+
+    def get_hardware_version(self) -> int:
+        """
+        Query the hardware version from the device.
+
+        :return: The hardware version of the device.
+        :rtype: int
+        """
+        logging.debug(f"get hardware version for channel {self.instance}")
+        hardware_version = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=101,
+                                                                instance=self.instance)
+        return hardware_version
+
+    def get_serial_number(self) -> int:
+        """
+        Query the serial number of the device.
+
+        :return: The serial number of the device.
+        :rtype: int
+        """
+        logging.debug(f"get serial number for channel {self.instance}")
+        serial_number = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=102,
+                                                             instance=self.instance)
+        return serial_number
+
+    def get_firmware_version(self) -> int:
+        """
+        Query the firmware version of the device.
+
+        :return: The firmware version of the device.
+        :rtype: int
+        """
+        logging.debug(f"get firmware version for channel {self.instance}")
+        firmware_version = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=103,
+                                                                instance=self.instance)
+        return firmware_version
+
+    def get_device_status(self) -> DeviceStatus:
+        """
+        Query the status of the device.
+
+        :return: the active status of the TEC controller
+        :rtype: DeviceStatus
+        """
+        logging.debug(f"get device status for channel {self.instance}")
+        status_id_int = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=104,
+                                                             instance=self.instance)
+        status_id = DeviceStatus(status_id_int)
+        return status_id
 
     def get_temperature(self) -> float:
         """
@@ -151,6 +216,190 @@ class MeerstetterTEC(object):
                                                                   instance=self.instance)
         return object_temperature
 
+    def get_setpoint_temperature(self) -> float:
+        """
+        Get the setpoint temperature from the TEC controller
+
+        :return: the setpoint temperature from the TEC controller
+        :rtype: float
+        """
+        logging.debug(f"get the setpoint temperature for channel {self.instance}")
+        setpoint = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1010,
+                                                        instance=self.instance)
+        return setpoint
+
+    def get_tec_current(self) -> float:
+        """
+        Get the actual output current.
+
+        :return: The output current in units of Amps (A).
+        :rtype: float
+        """
+        logging.debug(f"get output current for channel {self.instance}")
+        output_current = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1020,
+                                                              instance=self.instance)
+        return output_current
+
+    def get_tec_voltage(self) -> float:
+        """
+        Get the actual output voltage.
+
+        :return: The output voltage in units of Volts (V).
+        :rtype: float
+        """
+        logging.debug(f"get output voltage for channel {self.instance}")
+        output_voltage = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1021,
+                                                              instance=self.instance)
+        return output_voltage
+
+    def get_device_temperature(self) -> float:
+        """
+        Get the temperature of the TEC controller device.
+
+        :return: The TEC controller temperature in units of degrees Celsius (degC).
+        :rtype: float
+        """
+        logging.debug(f"get the device temperature for channel {self.instance}")
+        device_temp = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1063,
+                                                           instance=self.instance)
+        return device_temp
+
+    def is_temperature_stable(self) -> bool:
+        """
+        Check to see if the temperature is stable.
+
+        :return: True if the temperature is stable, False otherwise
+        :rtype: bool
+        """
+        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=1200,
+                                                    instance=self.instance)
+        stability = TemperatureStability(int(resp))
+        logging.debug(f"Temperature Stability: {stability.name}")
+        return stability == TemperatureStability.STABLE
+
+    def set_input_selection(self, input_selection: ControlInputSelection) -> None:
+        """
+        Set the output control input selection.
+
+        :param input_selection: the output control input selection for the TEC controller
+        :type input_selection: ControlInputSelection
+        :return: None
+        """
+        logging.debug(f"set the input selection for channel {self.instance} to {input_selection}")
+        self.mecom_basic_cmd.set_int32_value(address=self.address, parameter_id=2000,
+                                             instance=self.instance, value=input_selection.value)
+
+    def get_input_selection(self) -> ControlInputSelection:
+        """
+        Get the output control input selection.
+
+        :return: the output control input selection for the TEC controller
+        :rtype: ControlInputSelection
+        """
+        logging.debug(f"get the input selection for channel {self.instance}")
+        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=2000,
+                                                    instance=self.instance)
+        input_selection = ControlInputSelection(int(resp))
+        return input_selection
+
+    def set_output_stage_enable(self, output_stage_enable: OutputStageEnable) -> None:
+        """
+        Set the output stage enable used by the TEC controller
+
+        :param output_stage_enable: the output stage enable used by the TEC controller
+        :type output_stage_enable: OutputStageEnable
+        :return: None
+        """
+        logging.debug(f"set the output stage enable for channel {self.instance} to {output_stage_enable}")
+        self.mecom_basic_cmd.set_int32_value(address=self.address, parameter_id=2010,
+                                             instance=self.instance, value=output_stage_enable.value)
+
+    def get_output_stage_enable(self) -> OutputStageEnable:
+        """
+        Get the output stage enable used by the TEC controller.
+
+        :return: the output stage enable used by the TEC controller
+        :rtype: OutputStageEnable
+        """
+        logging.debug(f"get the output stage enable for channel {self.instance}")
+        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=2010,
+                                                    instance=self.instance)
+        return OutputStageEnable(int(resp))
+
+    def set_current_limitation(self, current_limit_amps: float) -> None:
+        """
+        Set the limiting drive current in units of Amps.
+
+        :param current_limit_amps: the limiting drive current value in units of Amps.
+        :type current_limit_amps: float
+        :return: None
+        """
+        logging.debug(f"set current limitation for channel {self.instance} to {float(current_limit_amps)} Amps")
+        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=2030,
+                                             instance=self.instance, value=float(current_limit_amps))
+
+    def get_current_limitation(self) -> float:
+        """
+        Get the limiting drive current in units of Amps.
+
+        :return: the limiting drive current for the TEC controller in units of Amps
+        :rtype: float
+        """
+        logging.debug(f"get the current limitation for channel {self.instance}")
+        current_limit = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=2030,
+                                                             instance=self.instance)
+        return current_limit
+
+    def set_voltage_limitation(self, voltage_limit_volts: float) -> None:
+        """
+        Set the limiting drive voltage in units of Volts.
+
+        :param voltage_limit_volts: the limiting drive current value in units of Volts.
+        :type voltage_limit_volts: float
+        :return: None
+        """
+        logging.debug(f"set voltage limitation for channel {self.instance} to {float(voltage_limit_volts)} Volts")
+        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=2031,
+                                             instance=self.instance, value=float(voltage_limit_volts))
+
+    def get_voltage_limitation(self) -> float:
+        """
+        Get the limiting drive voltage in units of Volts.
+
+        :return: the limiting drive voltage for the TEC controller in units of Volts
+        :rtype: float
+        """
+        logging.debug(f"get the voltage limitation for channel {self.instance}")
+
+        voltage_limit = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=2031,
+                                                             instance=self.instance)
+        return voltage_limit
+
+    def set_general_operating_mode(self, operating_mode: GeneralOperatingMode) -> None:
+        """
+        Set the operating mode of the TEC controller.
+
+        :param operating_mode: the operating mode of the TEC controller
+        :type operating_mode: GeneralOperatingMode
+        :return: None
+        """
+        logging.debug(f"set the general operating mode for channel {self.instance} to {operating_mode}")
+        self.mecom_basic_cmd.set_int32_value(address=self.address, parameter_id=2040,
+                                             instance=self.instance, value=operating_mode.value)
+
+    def get_general_operating_mode(self) -> GeneralOperatingMode:
+        """
+        Get the operating mode of the TEC controller.
+
+        :return: the operating mode of the TEC controller
+        :rtype: GeneralOperatingMode
+        """
+        logging.debug(f"get the general operating mode for channel {self.instance}")
+        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=2040,
+                                                    instance=self.instance)
+        operating_mode = GeneralOperatingMode(int(resp))
+        return operating_mode
+
     def get_firmware_identification_string(self) -> str:
         """
         Query the Firmware Identification String of the device.
@@ -160,6 +409,222 @@ class MeerstetterTEC(object):
         """
         identify = self.mecom_basic_cmd.get_ident_string(address=self.address, channel=self.instance)
         return identify
+
+    def set_temperature(self, temp_degc: float) -> None:
+        """
+        Set object temperature of channel to desired value in units of degrees Celsius.
+
+        :param temp_degc: The desired object temperature value in units of degrees Celsius.
+            The controller will set the object to this temperature value.
+        :type temp_degc: float
+        :return: None
+        """
+        logging.debug(f"set object temperature for channel {self.instance} to {temp_degc} C")
+        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=3000,
+                                             instance=self.instance, value=float(temp_degc))
+
+    def set_coarse_temperature_ramp(self, temp_ramp_degc_per_sec: float) -> None:
+        """
+        Set the coarse temperature ramp of the TEC controller to desired value in
+        units of degrees Celsius per second.
+
+        :param temp_ramp_degc_per_sec: the coarse temperature ramp value in units of degrees Celsius per second.
+        :type temp_ramp_degc_per_sec: float
+        :return: None
+        """
+        logging.debug(
+            f"set coarse temperature ramp for channel {self.instance} to {float(temp_ramp_degc_per_sec)} degC/second")
+        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=3003,
+                                             instance=self.instance, value=float(temp_ramp_degc_per_sec))
+
+    def get_coarse_temperature_ramp(self) -> float:
+        """
+        Get the coarse temperature ramp setting.
+
+        :return: the coarse temperature ramp setting for the controller
+            in units of degC/second
+        :rtype: float
+        """
+        logging.debug(f"get the coarse temperature ramp for channel {self.instance}")
+        temp_ramp = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=3003,
+                                                         instance=self.instance)
+        return temp_ramp
+
+    def set_proportional_gain(self, prop_gain: float) -> None:
+        """
+        Set the proportional gain (Kp) for the PID controller.
+
+        :param prop_gain: the proportional gain (Kp)
+        :type prop_gain: float
+        :return: None
+        """
+        logging.debug(f"set the proportional gain (Kp) for channel {self.instance} to {float(prop_gain)}")
+        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=3010,
+                                             instance=self.instance, value=float(prop_gain))
+
+    def get_proportional_gain(self) -> float:
+        """
+        Get the proportional gain (Kp) for the PID controller.
+
+        :return: the proportional gain (Kp)
+        :rtype: float
+        """
+        logging.debug(f"get the proportional gain (Kp) for channel {self.instance}")
+        proportional_gain = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=3010,
+                                                                 instance=self.instance)
+        return proportional_gain
+
+    def set_integration_time(self, int_time_sec: float) -> None:
+        """
+        Set the integration time (Ti) for the PID controller.
+
+        :param int_time_sec: the integration time (Ti) in units of seconds
+        :type int_time_sec: float
+        :return: None
+        """
+        logging.debug(f"set the integration time (Ti) for channel {self.instance} to {float(int_time_sec)} seconds")
+        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=3011,
+                                             instance=self.instance, value=float(int_time_sec))
+
+    def get_integration_time(self) -> float:
+        """
+        Get the integration time (Ti) for the PID controller.
+
+        :return: the integration time (Ti) in units of seconds
+        :rtype: float
+        """
+        logging.debug(f"get the integration time (Ti) for channel {self.instance}")
+        integration_time = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=3011,
+                                                                instance=self.instance)
+        return integration_time
+
+    def set_differential_time(self, diff_time_sec: float) -> None:
+        """
+        Set the differential time (Td) for the PID controller.
+
+        :param diff_time_sec: the differential time (Td) in units of seconds
+        :type diff_time_sec: float
+        :return: None
+        """
+        logging.debug(f"set the differential time (Td) for channel {self.instance} to {float(diff_time_sec)} seconds")
+        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=3012,
+                                             instance=self.instance, value=float(diff_time_sec))
+
+    def get_differential_time(self) -> float:
+        """
+        Get the differential time (Td) for the PID controller.
+
+        :return: the differential time (Td) in units of seconds
+        :rtype: float
+        """
+        logging.debug(f"get the differential time (Td) for channel {self.instance}")
+        differential_time = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=3012,
+                                                                 instance=self.instance)
+        return differential_time
+
+    def set_part_damping(self, part_damping: float) -> None:
+        """
+        Set D Part Damping PT1 for the PID controller. The value “D Part Damping PT1” is damping the resulting value of
+        the derivative term. It may be useful for very slow thermal models which result in high Td times.
+
+        :param part_damping: D Part Damping PT1 value
+        :type part_damping: float
+        :return: None
+        """
+        logging.debug(f"set D Part Damping PT1 for channel {self.instance} to {float(part_damping)}")
+        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=3013,
+                                             instance=self.instance, value=float(part_damping))
+
+    def get_part_damping(self) -> float:
+        """
+        Get D Part Damping PT1 for the PID controller. The value “D Part Damping PT1” is damping the resulting value of
+        the derivative term. It may be useful for very slow thermal models which result in high Td times.
+
+        :return: D Part Damping PT1 value
+        :rtype: float
+        """
+        logging.debug(f"get D Part Damping PT1 for channel {self.instance}")
+        part_damping = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=3013,
+                                                            instance=self.instance)
+        return part_damping
+
+    def set_thermal_regulation_mode(self, regulation_mode: ThermalRegulationMode) -> None:
+        """
+        Set the thermal regulation mode used by the TEC controller
+
+        :param regulation_mode: the operating mode of the TEC controller
+        :type regulation_mode: ThermalRegulationMode
+        :return: None
+        """
+        logging.debug(f"set the thermal regulation mode for channel {self.instance} to {regulation_mode}")
+        self.mecom_basic_cmd.set_int32_value(address=self.address, parameter_id=3020,
+                                             instance=self.instance, value=regulation_mode.value)
+
+    def get_thermal_regulation_mode(self) -> ThermalRegulationMode:
+        """
+        Get the thermal regulation mode used by the TEC controller
+
+        :return: the thermal regulation mode
+        :rtype: ThermalRegulationMode
+        """
+        logging.debug(f"get the thermal regulation mode for channel {self.instance}")
+        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=3020,
+                                                    instance=self.instance)
+        regulation_mode = ThermalRegulationMode(int(resp))
+        return regulation_mode
+
+    def set_positive_current_is(self, positive_current_is: PositiveCurrentIs) -> None:
+        """
+        Set whether positive current is "cooling" or "heating"; meaning,
+        is the TEC controller causing the TEC to cool or heat the object.
+
+        :param positive_current_is: returns whether positive current flow causes cooling or
+            heating of the TEC
+        :type positive_current_is: PositiveCurrentIs
+        :return: None
+        """
+        logging.debug(f"set the positive current is for channel {self.instance} to {positive_current_is}")
+        self.mecom_basic_cmd.set_int32_value(address=self.address, parameter_id=3034,
+                                             instance=self.instance, value=positive_current_is.value)
+
+    def get_positive_current_is(self) -> PositiveCurrentIs:
+        """
+        Check to see if positive current is "cooling" or "heating"; meaning,
+        is the TEC controller causing the TEC to cool or heat the object.
+
+        :return: returns whether positive current flow causes cooling or
+            heating of the TEC
+        :rtype: PositiveCurrentIs
+        """
+        logging.debug(f"get the positive current is for channel {self.instance}")
+        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=3034,
+                                                    instance=self.instance)
+        return PositiveCurrentIs(int(resp))
+
+    def set_object_sensor_type(self, sensor_type: ObjectSensorType) -> None:
+        """
+        Set the object sensor type used by the TEC controller
+
+        :param sensor_type: the type of temperature sensor being used to provide feedback
+        :type sensor_type: ObjectSensorType
+        :return: None
+        """
+        logging.debug(f"set the object sensor type for channel {self.instance} to {sensor_type}")
+        self.mecom_basic_cmd.set_int32_value(address=self.address, parameter_id=4034,
+                                             instance=self.instance, value=sensor_type.value)
+
+    def get_object_sensor_type(self) -> ObjectSensorType:
+        """
+        Get the object sensor type being used to provide temperature feedback to the
+        TEC controller.
+
+        :return: the type of temperature sensor being used to provide feedback
+        :rtype: ObjectSensorType
+        """
+        logging.debug(f"get the object sensor type for channel {self.instance}")
+        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=4034,
+                                                    instance=self.instance)
+        return ObjectSensorType(int(resp))
 
     def download_lookup_table(self) -> None:
         """
@@ -208,21 +673,119 @@ class MeerstetterTEC(object):
         except LutException as e:
             raise ComCommandException(f"stop_lookup_table failed: Detail: {e}")
 
+    def _set_enable(self, enable: bool = True) -> None:
+        """
+        Enable or disable control loop.
+
+        :param enable:
+        :type enable: bool
+        :return: None
+        """
+        value, description = (1, "on") if enable else (0, "off")
+        logging.debug(f"set loop for channel {self.instance} to {description}")
+        self.mecom_basic_cmd.set_int32_value(address=self.address, parameter_id=2010,
+                                             instance=self.instance, value=value)
+
+    def enable(self) -> None:
+        """
+        Enable or disable control loop.
+
+        :return:
+        :rtype: None
+        """
+        self._set_enable(True)
+
+    def disable(self) -> None:
+        """
+        Enable or disable control loop.
+
+        :return:
+        :rtype: None
+        """
+        self._set_enable(False)
+
+    def get_all_settings(self) -> dict:
+        """
+        Query all settings from the device.
+
+        :return:
+        :rtype: dict
+        """
+        settings = {
+            "idn": self.get_id(),
+            "device_address": self.get_device_address(),
+            "device_type": self.get_device_type(),
+            "serial_number": self.get_serial_number(),
+            "hardware_version": self.get_hardware_version(),
+            "firmware_id": self.get_firmware_identification_string(),
+            "firmware_version": self.get_firmware_version(),
+            "device_status": self.get_device_status(),
+            "object_temperature": self.get_temperature(),
+            "actual_output_current": self.get_tec_current(),
+            "actual_output_voltage": self.get_tec_voltage(),
+            "device_temperature": self.get_device_temperature(),
+            "input_selection": self.get_input_selection(),
+            "current_limitation": self.get_current_limitation(),
+            "voltage_limitation": self.get_voltage_limitation(),
+            "current_error_threshold": self.get_current_error_threshold(),
+            "voltage_error_threshold": self.get_voltage_error_threshold(),
+            "general_operating_mode": self.get_general_operating_mode(),
+            "base_baud_rate": self.get_base_baud_rate(),
+            "uart_response_delay": self.get_uart_response_delay(),
+            "coarse_temp_ramp": self.get_coarse_temperature_ramp(),
+            "proportional_gain_kp": self.get_proportional_gain(),
+            "integration_time_ti": self.get_integration_time(),
+            "differential_time_td": self.get_differential_time(),
+            "pid_part_damping": self.get_part_damping(),
+            "thermal_regulation_mode": self.get_thermal_regulation_mode(),
+            "positive_current_is": self.get_positive_current_is(),
+            "object_sensor_type": self.get_object_sensor_type()
+        }
+        return settings
+
 
 if __name__ == "__main__":
     mc = MeerstetterTEC()
-    mc.connect(port="COM9", address=2, instance=1)
+    mc.connect(port="COM14", address=2, instance=1)
 
-    print(mc.get_firmware_identification_string())
-    print(type(mc.get_firmware_identification_string()))
+    firmware_identification_string = mc.get_firmware_identification_string()
+    print(f"firmware_identification_string : {firmware_identification_string} ; type {type(firmware_identification_string)}")
     print("\n", end="")
 
-    print(mc.get_device_type())
-    print(type(mc.get_device_type()))
+    print(f"device_type : {mc.get_device_type()} ; type {type(mc.get_device_type())}")
     print("\n", end="")
 
-    print(mc.get_temperature())
-    print(type(mc.get_temperature()))
+    print(f"temperature : {mc.get_temperature()} ; type {type(mc.get_temperature())}")
+    print("\n", end="")
+
+    mc.download_lookup_table()
+    print("\n", end="")
+
+    mc.set_proportional_gain(prop_gain=50.0)
+    print(f"proportional_gain : {mc.get_proportional_gain()} ; type {type(mc.get_proportional_gain())}")
+    print("\n", end="")
+
+    mc.set_proportional_gain(prop_gain=60.0)
+    print(f"proportional_gain : {mc.get_proportional_gain()} ; type {type(mc.get_proportional_gain())}")
+    print("\n", end="")
+
+    mc.set_integration_time(int_time_sec=40.0)
+    print(f"integration_time : {mc.get_integration_time()} ; type {type(mc.get_integration_time())}")
+    print("\n", end="")
+
+    mc.set_integration_time(int_time_sec=45.0)
+    print(f"integration_time : {mc.get_integration_time()} ; type {type(mc.get_integration_time())}")
+    print("\n", end="")
+
+    mc.set_differential_time(diff_time_sec=1.0)
+    print(f"differential_time : {mc.get_differential_time()} ; type {type(mc.get_differential_time())}")
+    print("\n", end="")
+
+    mc.set_differential_time(diff_time_sec=0.0)
+    print(f"differential_time : {mc.get_differential_time()} ; type {type(mc.get_differential_time())}")
+    print("\n", end="")
+
+    print(f"part_damping : {mc.get_part_damping()} ; type {type(mc.get_part_damping())}")
     print("\n", end="")
 
     mc.tear()
