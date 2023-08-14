@@ -107,10 +107,12 @@ class MeerstetterTEC(object):
         they are often /dev/ttyXXXY where XXX usually indicates if it is a serial or USB port, and Y indicates the
         number. E.g. /dev/ttyUSB0 on Linux and 'COM7' on Windows
 
-        :param: Port, as described in description
-        :type: str
-        :param:
-        :type: int
+        :param port: Port, as described in description
+        :type port: str
+        :param address:
+        :type address: int
+        :param instance:
+        :type instance: int
         :return: None
         """
         self.phy_com.connect(port_name=port)
@@ -375,6 +377,55 @@ class MeerstetterTEC(object):
                                                              instance=self.instance)
         return voltage_limit
 
+    def set_current_error_threshold(self, threshold_amps: float) -> None:
+        """
+        Set the current error threshold in units of Amps.
+
+        :param threshold_amps: the current error threshold in units of Amps
+        :type threshold_amps: float
+        :return: none
+        """
+        logging.debug(f"set current error threshold for channel {self.instance} to {float(threshold_amps)} Amps")
+        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=2032,
+                                             instance=self.instance, value=float(threshold_amps))
+
+    def get_current_error_threshold(self) -> float:
+        """
+        Get the current error threshold.
+
+        :return: the current error threshold in units of Amps
+        :rtype: float
+        """
+        logging.debug(f"get the current error threshold for channel {self.instance}")
+        curr_threshold = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=2032,
+                                                              instance=self.instance)
+        return curr_threshold
+
+    def set_voltage_error_threshold(self, threshold_volts: float) -> None:
+        """
+        Set the voltage error threshold in units of Volts.
+
+        :param threshold_volts: the voltage error threshold in units of Volts
+        :type threshold_volts: float
+        :return: none
+        """
+        logging.debug(
+            f"set voltage error threshold for channel {self.instance} to {float(threshold_volts)} Volts")
+        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=2033,
+                                             instance=self.instance, value=float(threshold_volts))
+
+    def get_voltage_error_threshold(self) -> float:
+        """
+        Get the voltage error threshold.
+
+        :return: the voltage error threshold in units of Volts
+        :rtype: float
+        """
+        logging.debug(f"get the voltage error threshold for channel {self.instance}")
+        volt_threshold = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=2033,
+                                                              instance=self.instance)
+        return volt_threshold
+
     def set_general_operating_mode(self, operating_mode: GeneralOperatingMode) -> None:
         """
         Set the operating mode of the TEC controller.
@@ -399,6 +450,42 @@ class MeerstetterTEC(object):
                                                     instance=self.instance)
         operating_mode = GeneralOperatingMode(int(resp))
         return operating_mode
+
+    def get_base_baud_rate(self) -> int:
+        """
+        Get the UART base baud rate.
+
+        :return: the UART base baud rate
+        :rtype: int
+        """
+        logging.debug(f"get the UART base baud rate for channel {self.instance}")
+        baud_rate = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=2050,
+                                                         instance=self.instance)
+        return baud_rate
+
+    def get_device_address(self) -> int:
+        """
+        Query the device address.
+
+        :return: the device address
+        :rtype: int
+        """
+        logging.debug(f"get the device address for channel {self.instance}")
+        device_address = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=2051,
+                                                              instance=self.instance)
+        return device_address
+
+    def get_uart_response_delay(self) -> float:
+        """
+        Get the UART response delay for the controller.
+
+        :return: the UART response delay in units of microseconds (us)
+        :rtype: float
+        """
+        logging.debug(f"get the UART response delay for channel {self.instance}")
+        delay_us = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=2052,
+                                                        instance=self.instance)
+        return delay_us
 
     def get_firmware_identification_string(self) -> str:
         """
