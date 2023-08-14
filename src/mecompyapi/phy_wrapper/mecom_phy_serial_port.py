@@ -1,6 +1,6 @@
 from serial import Serial, SerialException, SerialTimeoutException
 
-from phy_wrapper.int_mecom_phy import (
+from src.mecompyapi.phy_wrapper.int_mecom_phy import (
     IntMeComPhy, MeComPhyInterfaceException, MeComPhyTimeoutException
 )
 

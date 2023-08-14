@@ -4,10 +4,10 @@ from lut_cmd import LutCmd
 from lut_exception import LutException
 from lut_status import LutStatus
 
-from phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
-from mecom_core.mecom_basic_cmd import MeComBasicCmd
-from mecom_core.mecom_query_set import MeComQuerySet
-from mecom_core.com_command_exception import ComCommandException
+from src.mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
+from src.mecompyapi.mecom_core.mecom_basic_cmd import MeComBasicCmd
+from src.mecompyapi.mecom_core.mecom_query_set import MeComQuerySet
+from src.mecompyapi.mecom_core.com_command_exception import ComCommandException
 
 
 class LutTest:

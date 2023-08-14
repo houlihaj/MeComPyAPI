@@ -1,16 +1,16 @@
 import time
 from typing import List
 
-from mecom_tec.lookup_table.lut_record import LutRecord
-from mecom_tec.lookup_table.lut_status import LutStatus
-from mecom_tec.lookup_table.lut_exception import LutException
-from mecom_tec.lookup_table.lut_constants import *
+from src.mecompyapi.mecom_tec.lookup_table.lut_record import LutRecord
+from src.mecompyapi.mecom_tec.lookup_table.lut_status import LutStatus
+from src.mecompyapi.mecom_tec.lookup_table.lut_exception import LutException
+from src.mecompyapi.mecom_tec.lookup_table.lut_constants import *
 
-from mecom_core.mecom_query_set import MeComQuerySet
-from mecom_core.mecom_var_convert import MeComVarConvert
-from mecom_core.mecom_frame import MeComPacket
-from mecom_core.mecom_basic_cmd import MeComBasicCmd
-from phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
+from src.mecompyapi.mecom_core.mecom_query_set import MeComQuerySet
+from src.mecompyapi.mecom_core.mecom_var_convert import MeComVarConvert
+from src.mecompyapi.mecom_core.mecom_frame import MeComPacket
+from src.mecompyapi.mecom_core.mecom_basic_cmd import MeComBasicCmd
+from src.mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
 
 
 class LutCmd(object):

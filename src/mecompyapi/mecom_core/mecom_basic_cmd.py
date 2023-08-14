@@ -1,8 +1,8 @@
-from mecom_core.com_command_exception import ComCommandException
-from mecom_core.mecom_frame import MeComPacket
-from mecom_core.mecom_query_set import MeComQuerySet
-from mecom_core.mecom_var_convert import MeComVarConvert
-from phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
+from src.mecompyapi.mecom_core.com_command_exception import ComCommandException
+from src.mecompyapi.mecom_core.mecom_frame import MeComPacket
+from src.mecompyapi.mecom_core.mecom_query_set import MeComQuerySet
+from src.mecompyapi.mecom_core.mecom_var_convert import MeComVarConvert
+from src.mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
 
 
 class MeComBasicCmd:

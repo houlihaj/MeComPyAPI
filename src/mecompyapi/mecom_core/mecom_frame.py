@@ -4,8 +4,8 @@ from dataclasses import dataclass
 
 from PyCRC.CRCCCITT import CRCCCITT
 
-from phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
-from mecom_core.mecom_var_convert import MeComVarConvert
+from src.mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
+from src.mecompyapi.mecom_core.mecom_var_convert import MeComVarConvert
 
 
 class WrongChecksumException(Exception):

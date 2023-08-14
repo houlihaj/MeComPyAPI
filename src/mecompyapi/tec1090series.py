@@ -713,13 +713,16 @@ class MeerstetterTEC(object):
                                                     instance=self.instance)
         return ObjectSensorType(int(resp))
 
-    def download_lookup_table(self) -> None:
+    def download_lookup_table(self, filepath: str) -> None:
         """
+        Downloads a lookup table file (*.csv) to the device. Raise an Exception
+        if a timeout is triggered while trying to download the lookup table.
 
+        :param filepath: Path of the lookup table file.
+        :type filepath: str
+        :raises LutException:
         :return: None
         """
-        filepath = "LookupTable Sine ramp_0.1_degC_per_sec.csv"  # Need to update with correct path
-
         # Enter the path to the lookup table file (*.csv)
         try:
             self.mecom_lut_cmd.download_lookup_table(address=self.address, filepath=filepath)
@@ -742,7 +745,9 @@ class MeerstetterTEC(object):
 
     def start_lookup_table(self) -> None:
         """
+        Starts the lookup table that is currently stored on the device.
 
+        :raises ComCommandException:
         :return: None
         """
         try:
@@ -752,7 +757,9 @@ class MeerstetterTEC(object):
 
     def stop_lookup_table(self) -> None:
         """
+        Cancels the active lookup table progress process.
 
+        :raises ComCommandException:
         :return: None
         """
         try:
@@ -833,7 +840,7 @@ class MeerstetterTEC(object):
 
 if __name__ == "__main__":
     mc = MeerstetterTEC()
-    mc.connect(port="COM14", address=2, instance=1)
+    mc.connect(port="COM9", address=2, instance=1)
 
     firmware_identification_string = mc.get_firmware_identification_string()
     print(f"firmware_identification_string : {firmware_identification_string} ; type {type(firmware_identification_string)}")
@@ -845,7 +852,8 @@ if __name__ == "__main__":
     print(f"temperature : {mc.get_temperature()} ; type {type(mc.get_temperature())}")
     print("\n", end="")
 
-    mc.download_lookup_table()
+    filepath_ = "LookupTable Sine ramp_0.1_degC_per_sec.csv"
+    mc.download_lookup_table(filepath=filepath_)
     print("\n", end="")
 
     mc.set_proportional_gain(prop_gain=50.0)
