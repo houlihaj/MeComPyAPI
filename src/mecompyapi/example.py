@@ -1,6 +1,6 @@
-from phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
-from mecom_core.mecom_basic_cmd import MeComBasicCmd
-from mecom_core.mecom_query_set import MeComQuerySet
+from mecompyapi.mecom_core.mecom_basic_cmd import MeComBasicCmd
+from mecompyapi.mecom_core.mecom_query_set import MeComQuerySet
+from mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
 
 
 if __name__ == "__main__":

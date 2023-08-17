@@ -1,6 +1,6 @@
 from serial import Serial, SerialException, SerialTimeoutException
 
-from src.mecompyapi.phy_wrapper.int_mecom_phy import (
+from mecompyapi.phy_wrapper.int_mecom_phy import (
     IntMeComPhy, MeComPhyInterfaceException, MeComPhyTimeoutException
 )
 
@@ -15,7 +15,8 @@ class InstrumentConnectionError(InstrumentException):
 
 
 class ResponseException(Exception):
-    pass
+    def __init__(self, message):
+        super().__init__(message)
 
 
 class ResponseTimeout(ResponseException):

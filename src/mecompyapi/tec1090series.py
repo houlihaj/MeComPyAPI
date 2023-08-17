@@ -1,22 +1,24 @@
+import os
 import logging
-import datetime
 import time
 import statistics
 from enum import Enum
-from typing import Tuple, List, Dict, Optional
-from serial import SerialException
+from typing import Tuple, List, Optional
 
-from mecom_core.mecom_frame import MeComPacket
-from mecom_core.mecom_query_set import MeComQuerySet
-from mecom_core.mecom_var_convert import MeComVarConvert
-from mecom_core.mecom_basic_cmd import MeComBasicCmd
-from mecom_core.com_command_exception import ComCommandException
+from mecompyapi.mecom_core.mecom_query_set import MeComQuerySet
+from mecompyapi.mecom_core.mecom_basic_cmd import MeComBasicCmd
+from mecompyapi.mecom_core.com_command_exception import ComCommandException
 
-from phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
+from mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
 
-from mecom_tec.lookup_table.lut_cmd import LutCmd
-from mecom_tec.lookup_table.lut_status import LutStatus
-from mecom_tec.lookup_table.lut_exception import LutException
+from mecompyapi.mecom_tec.lookup_table.lut_cmd import LutCmd
+from mecompyapi.mecom_tec.lookup_table.lut_status import LutStatus
+from mecompyapi.mecom_tec.lookup_table.lut_exception import LutException
+
+
+class TimeoutException(Exception):
+    def __init__(self, message):
+        super().__init__(message)
 
 
 class TemperatureStability(Enum):
@@ -128,6 +130,14 @@ class MeerstetterTEC(object):
         also be called when the program is ending.
         """
         self.phy_com.tear()
+
+    def reset(self) -> None:
+        """
+        Resets the device after an error has occurred.
+
+        :return: None
+        """
+        self.mecom_basic_cmd.reset_device(address=self.address, channel=self.instance)
 
     def get_id(self) -> str:
         """
@@ -715,7 +725,7 @@ class MeerstetterTEC(object):
 
     def download_lookup_table(self, filepath: str) -> None:
         """
-        Downloads a lookup table file (*.csv) to the device. Raise an Exception
+        Downloads a lookup table file (*.csv) to the device. Raise an LutException
         if a timeout is triggered while trying to download the lookup table.
 
         :param filepath: Path of the lookup table file.
@@ -767,6 +777,17 @@ class MeerstetterTEC(object):
         except LutException as e:
             raise ComCommandException(f"stop_lookup_table failed: Detail: {e}")
 
+    def get_lookup_table_status(self) -> LutStatus:
+        """
+        The status returned during the Lookup Table operating procedure
+
+        :return: the status for the lookup table
+        :rtype: LutStatus
+        """
+        logging.debug(f"get the lookup table status for channel {self.instance}")
+        status = self.mecom_lut_cmd.get_status(address=self.address, instance=self.instance)
+        return status
+
     def _set_enable(self, enable: bool = True) -> None:
         """
         Enable or disable control loop.
@@ -797,6 +818,72 @@ class MeerstetterTEC(object):
         :rtype: None
         """
         self._set_enable(False)
+
+    def wait_for_stable_temperature(self, timeout: int = 120) -> None:
+        """
+        Wait for the temperature to stabilize after calling
+        the set_temperature() method.
+
+        The method starts with a one-second wait period to ensure
+        the "Temperature is Stable" status has been updated after the
+        set_temperature() is called. It takes approximately a half second
+        for the "Temperature is Stable" status to be updated after the
+        set_temperature() call.
+
+        :param timeout: the timeout period in units of seconds
+        :type timeout: int
+        :raises TimeoutException:
+        :return: None
+        """
+        time.sleep(1.0)
+        runtime = 0.0
+        start_time = time.time()
+        stabilizing = self.is_temperature_stable()
+        while stabilizing is False and runtime < timeout:
+            stabilizing = self.is_temperature_stable()
+            runtime = time.time() - start_time  # runtime is in units of seconds
+            time.sleep(0.5)
+        if runtime >= timeout:
+            raise TimeoutException(f"wait_for_stable_temperature() timed out after {runtime} seconds")
+
+    def set_and_stabilize_tec_temperature(self, temperature: float = 30.0,
+                                          threshold_deg_c: float = 0.1) -> Tuple[float, List[float]]:
+        """
+        Set the TEC temperature and wait for it to stabilize. The temperature is
+        considered stable when the measured standard deviation is less than the defined
+        threshold standard deviation (i.e. threshold_deg_c).
+
+        :param temperature: Use the TEC controller to set the ambient temperature for the ETM
+            in units of degrees Celsius.
+        :type temperature: float
+        :param threshold_deg_c: Threshold standard deviation (units of degC) needed for temperature
+            to be considered stable
+        :type: float
+        :return: A tuple containing: the time taken for the object temperature to become stable
+            and a list of standard deviation values measured while waiting for the object
+            temperature to become stable
+        :rtype: float, List[float]
+        """
+        self.disable()
+        try:
+            self.set_temperature(float(temperature))
+        finally:
+            self.enable()
+        start_time = time.time()
+        logging.info("Waiting for the temperature to stabilize...")
+        standard_deviation_list = []
+        standard_deviation = 1
+        # Measured (i.e. object) temperature standard deviation < threshold_deg_c
+        while standard_deviation > threshold_deg_c:
+            # Using 100 samples to calculate the standard deviation
+            object_temperatures = [self.get_temperature() for _ in range(100)]
+            logging.debug(f"Object temperatures: {object_temperatures}")
+            # Using statistics package to find the standard deviation
+            standard_deviation = statistics.stdev(object_temperatures)
+            logging.debug(f"standard_deviation: {standard_deviation}")
+            standard_deviation_list.append(standard_deviation)
+        total_time_to_stabilize = time.time() - start_time
+        return total_time_to_stabilize, standard_deviation_list
 
     def get_all_settings(self) -> dict:
         """
@@ -852,7 +939,8 @@ if __name__ == "__main__":
     print(f"temperature : {mc.get_temperature()} ; type {type(mc.get_temperature())}")
     print("\n", end="")
 
-    filepath_ = "LookupTable Sine ramp_0.1_degC_per_sec.csv"
+    filepath_ = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             "mecom_tec/lookup_table/csv/LookupTable Sine ramp_0.1_degC_per_sec.csv")
     mc.download_lookup_table(filepath=filepath_)
     print("\n", end="")
 

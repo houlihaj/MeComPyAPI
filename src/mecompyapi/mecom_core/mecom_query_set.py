@@ -1,8 +1,8 @@
 import random
 
-from src.mecompyapi.mecom_core.mecom_frame import MeComFrame, MeComPacket, ERcvType
-from src.mecompyapi.phy_wrapper.int_mecom_phy import IntMeComPhy, MeComPhyTimeoutException
-from src.mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
+from mecompyapi.mecom_core.mecom_frame import MeComFrame, MeComPacket, ERcvType
+from mecompyapi.phy_wrapper.int_mecom_phy import IntMeComPhy, MeComPhyTimeoutException
+from mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
 
 
 class SetServerErrorException(Exception):

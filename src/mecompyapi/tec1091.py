@@ -19,9 +19,6 @@ if __name__ == '__main__':
     # initialize controller
     mc = MeerstetterTEC1091()
 
-    mc.connect(port="COM17", channel=1)
-
-    # get the values from DEFAULT_QUERIES
-    print(mc.get_data())
+    mc.connect(port="COM9", address=2, instance=1)
 
     mc.tear()

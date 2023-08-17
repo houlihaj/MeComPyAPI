@@ -1,16 +1,17 @@
+import os
 import time
 from typing import List
 
-from src.mecompyapi.mecom_tec.lookup_table.lut_record import LutRecord
-from src.mecompyapi.mecom_tec.lookup_table.lut_status import LutStatus
-from src.mecompyapi.mecom_tec.lookup_table.lut_exception import LutException
-from src.mecompyapi.mecom_tec.lookup_table.lut_constants import *
+from mecompyapi.mecom_tec.lookup_table.lut_record import LutRecord
+from mecompyapi.mecom_tec.lookup_table.lut_status import LutStatus
+from mecompyapi.mecom_tec.lookup_table.lut_exception import LutException
+from mecompyapi.mecom_tec.lookup_table.lut_constants import *
 
-from src.mecompyapi.mecom_core.mecom_query_set import MeComQuerySet
-from src.mecompyapi.mecom_core.mecom_var_convert import MeComVarConvert
-from src.mecompyapi.mecom_core.mecom_frame import MeComPacket
-from src.mecompyapi.mecom_core.mecom_basic_cmd import MeComBasicCmd
-from src.mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
+from mecompyapi.mecom_core.mecom_query_set import MeComQuerySet
+from mecompyapi.mecom_core.mecom_var_convert import MeComVarConvert
+from mecompyapi.mecom_core.mecom_frame import MeComPacket
+from mecompyapi.mecom_core.mecom_basic_cmd import MeComBasicCmd
+from mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
 
 
 class LutCmd(object):
@@ -503,7 +504,9 @@ if __name__ == "__main__":
 
     lut_cmd = LutCmd(mecom_query_set=mequery_set)
 
-    lut_cmd.download_lookup_table(address=2, filepath="LookupTable Sine ramp_0.1_degC_per_sec.csv")
+    filepath_ = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             "csv/LookupTable Sine ramp_0.1_degC_per_sec.csv")
+    lut_cmd.download_lookup_table(address=2, filepath=filepath_)
 
     lut_status_query = lut_cmd.get_lut_status_query(address=2)
     print(f"lut_status_query : {lut_status_query}")

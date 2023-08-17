@@ -4,7 +4,8 @@ class MeComPhyTimeoutException(Exception):
     
     Initializes a new instance of the Exception class with a specified error message.
     """
-    pass
+    def __init__(self, message):
+        super().__init__(message)
 
 
 class MeComPhyInterfaceException(Exception):
@@ -13,7 +14,8 @@ class MeComPhyInterfaceException(Exception):
 
     Initializes a new instance of the Exception class with a specified error message.
     """
-    pass
+    def __init__(self, message):
+        super().__init__(message)
     
 
 class IntMeComPhy:
