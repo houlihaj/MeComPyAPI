@@ -9,7 +9,7 @@ class MeerstetterTEC1091(MeerstetterTEC):
     """
 
     def __init__(self, *args, **kwars):
-        MeerstetterTEC().__init__()
+        super().__init__()
 
 
 if __name__ == '__main__':
@@ -19,6 +19,10 @@ if __name__ == '__main__':
     # initialize controller
     mc = MeerstetterTEC1091()
 
-    mc.connect(port="COM9", address=2, instance=1)
+    mc.connect(port="COM9", instance=1)
+
+    identity = mc.get_id()
+    print(f"identity : {identity} ; type {type(identity)}")
+    print("\n", end="")
 
     mc.tear()

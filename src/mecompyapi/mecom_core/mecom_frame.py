@@ -9,7 +9,8 @@ from mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
 
 
 class WrongChecksumException(Exception):
-    pass
+    def __init__(self, message):
+        super().__init__(message)
 
 
 class ERcvType(Enum):

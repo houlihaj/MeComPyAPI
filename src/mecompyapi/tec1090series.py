@@ -9,7 +9,7 @@ from mecompyapi.mecom_core.mecom_query_set import MeComQuerySet
 from mecompyapi.mecom_core.mecom_basic_cmd import MeComBasicCmd
 from mecompyapi.mecom_core.com_command_exception import ComCommandException
 
-from mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
+from mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort, InstrumentException, ResponseTimeout
 
 from mecompyapi.mecom_tec.lookup_table.lut_cmd import LutCmd
 from mecompyapi.mecom_tec.lookup_table.lut_status import LutStatus
@@ -103,26 +103,38 @@ class MeerstetterTEC(object):
         self.address = None  # type: Optional[int]
         self.instance = None  # type: Optional[int]
 
-    def connect(self, port: str = "COM9", address: int = 2, instance: int = 1):
+    def connect(self, port: str = "COM9", instance: int = 1):
         """
-        Connects to a serial port. On Windows, these are typically 'COMX' where X is the number of the port. In Linux,
-        they are often /dev/ttyXXXY where XXX usually indicates if it is a serial or USB port, and Y indicates the
-        number. E.g. /dev/ttyUSB0 on Linux and 'COM7' on Windows
+        Connects to a serial port. On Windows, these are typically 'COMX' where X
+        is the number of the port. In Linux, they are often /dev/ttyXXXY where XXX
+        usually indicates if it is a serial or USB port, and Y indicates the number.
+        E.g. /dev/ttyUSB0 on Linux and 'COM7' on Windows
+
+        The get_device_address() query is in a retry after exception loop because
+        the query will return fewer bytes than expected after closing the Meerstetter
+        TEC Service Software application. The query typically fails on the first
+        request but will succeed on the second request.
 
         :param port: Port, as described in description
         :type port: str
-        :param address:
-        :type address: int
         :param instance:
         :type instance: int
         :return: None
         """
+        self.instance = instance
         self.phy_com.connect(port_name=port)
         mequery_set = MeComQuerySet(phy_com=self.phy_com)
         self.mecom_basic_cmd = MeComBasicCmd(mequery_set=mequery_set)
         self.mecom_lut_cmd = LutCmd(mecom_query_set=mequery_set)
-        self.address = address
-        self.instance = instance
+        retries = 3
+        for _ in range(retries):
+            try:
+                self.address = self.get_device_address()
+                logging.debug(f"connected to {self.address}")
+                return
+            except ComCommandException:
+                continue
+        raise InstrumentException(f"Could not successfully query the controller address after {retries} retries...")
 
     def tear(self):
         """
@@ -477,11 +489,17 @@ class MeerstetterTEC(object):
         """
         Query the device address.
 
+        Using address 0, the device will always answer independent of its address. The
+        device is in broadcast mode and receives a package when using address 0.
+
+        The advice is to use address 0 for this method alone. This method will return
+        the device address, which should be used for all other methods.
+
         :return: the device address
         :rtype: int
         """
         logging.debug(f"get the device address for channel {self.instance}")
-        device_address = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=2051,
+        device_address = self.mecom_basic_cmd.get_int32_value(address=0, parameter_id=2051,
                                                               instance=self.instance)
         return device_address
 
@@ -927,7 +945,7 @@ class MeerstetterTEC(object):
 
 if __name__ == "__main__":
     mc = MeerstetterTEC()
-    mc.connect(port="COM9", address=2, instance=1)
+    mc.connect(port="COM9", instance=1)
 
     firmware_identification_string = mc.get_firmware_identification_string()
     print(f"firmware_identification_string : {firmware_identification_string} ; type {type(firmware_identification_string)}")

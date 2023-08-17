@@ -90,7 +90,7 @@ class MeComPhySerialPort(IntMeComPhy):
         """
         recv = self.ser.read(size=size)
         if len(recv) < size:
-            raise ResponseTimeout("timeout while communication via serial")
+            raise ResponseTimeout("timeout because serial read returned less bytes than expected")
         else:
             return recv
 

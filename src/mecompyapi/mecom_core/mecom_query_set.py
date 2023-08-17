@@ -6,7 +6,8 @@ from mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
 
 
 class SetServerErrorException(Exception):
-    pass
+    def __init__(self, message):
+        super().__init__(message)
 
 
 class CheckIfConnectedOrException(Exception):
@@ -14,21 +15,27 @@ class CheckIfConnectedOrException(Exception):
     If the interface is not ready and the current thread is not the
     creator of this instance, throw exception
     """
-    pass
+
+    def __init__(self, message):
+        super().__init__(message)
 
 
 class ServerException(Exception):
     """
     Is used when the server has returned a Server Error Code.
     """
-    pass
+
+    def __init__(self, message):
+        super().__init__(message)
 
 
 class NotConnectedException(Exception):
     """
     Initializes a new instance of NotConnectedException.
     """
-    pass
+
+    def __init__(self, message):
+        super().__init__(message)
 
 
 class GeneralException(Exception):
@@ -36,7 +43,9 @@ class GeneralException(Exception):
     Is used to encapsulate all not specific exceptions.
     Check the inner exception for details.
     """
-    pass
+
+    def __init__(self, message):
+        super().__init__(message)
 
 
 class MeComQuerySet:
@@ -202,7 +211,7 @@ class MeComQuerySet:
                 return self.local_query(tx_frame=tx_frame)
             except ServerException as e:
                 raise e
-            except Exception as e:
+            except GeneralException as e:
                 self.is_ready = False
                 raise e
 
@@ -235,7 +244,7 @@ class MeComQuerySet:
             except ServerException as e:
                 raise e
 
-            except Exception as e:
+            except GeneralException as e:
                 self.is_ready = False
                 raise e
 
