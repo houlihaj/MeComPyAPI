@@ -113,7 +113,7 @@ class MeComPhySerialPort(IntMeComPhy):
         # flush write cache
         self.ser.flush()
 
-    def get_data_or_timeout(self) -> str:
+    def get_data_or_timeout(self, stream: str) -> str:
         """
         Tries to read data from the physical interface or throws a timeout exception.
 
@@ -122,8 +122,12 @@ class MeComPhySerialPort(IntMeComPhy):
         It will wait till the timeout occurs if nothing is received.
         Must probably be called several times to receive the whole frame.
 
-        :raises MeComPhyTimeoutException:
-        :raises MeComPhyInterfaceException:
+        :param stream: Stream where data will be added to.
+        :type stream: str
+        :raises MeComPhyInterfaceException: Thrown when the underlying physical interface
+            is not OK.
+        :raises MeComPhyTimeoutException: Thrown when 0 bytes were received during the
+            specified timeout time.
         :return:
         :rtype: str
         """
@@ -145,3 +149,21 @@ class MeComPhySerialPort(IntMeComPhy):
 
         except Exception as e:
             raise MeComPhyInterfaceException(f"Failure during receiving: {e}")
+
+    def change_speed(self, baudrate: int):
+        """
+        Used to change the Serial Speed in case of serial communication interfaces.
+
+        :param baudrate:
+        :type baudrate: int
+        """
+        raise NotImplementedError
+
+    def set_timeout(self, milliseconds: int):
+        """
+        Used to modify the standard timeout of the physical interface.
+
+        :param milliseconds:
+        :type milliseconds: int
+        """
+        raise NotImplementedError
