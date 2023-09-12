@@ -42,7 +42,7 @@ class IntMeComPhy(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_data_or_timeout(self, stream: str):
+    def get_data_or_timeout(self):
         """
         Tries to read data from the physical interface or throws a timeout exception.
         
@@ -51,8 +51,6 @@ class IntMeComPhy(ABC):
         It will wait till the timeout occurs if nothing is received.
         Must probably be called several times to receive the whole frame.
 
-        :param stream: Stream where data will be added to.
-        :type stream: str
         :raises MeComPhyInterfaceException: Thrown when the underlying physical interface
             is not OK.
         :raises MeComPhyTimeoutException: Thrown when 0 bytes were received during the

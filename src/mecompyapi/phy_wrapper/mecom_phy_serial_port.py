@@ -113,7 +113,7 @@ class MeComPhySerialPort(IntMeComPhy):
         # flush write cache
         self.ser.flush()
 
-    def get_data_or_timeout(self, stream: str) -> str:
+    def get_data_or_timeout(self) -> str:
         """
         Tries to read data from the physical interface or throws a timeout exception.
 
@@ -122,8 +122,6 @@ class MeComPhySerialPort(IntMeComPhy):
         It will wait till the timeout occurs if nothing is received.
         Must probably be called several times to receive the whole frame.
 
-        :param stream: Stream where data will be added to.
-        :type stream: str
         :raises MeComPhyInterfaceException: Thrown when the underlying physical interface
             is not OK.
         :raises MeComPhyTimeoutException: Thrown when 0 bytes were received during the
