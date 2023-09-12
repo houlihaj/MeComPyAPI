@@ -87,6 +87,11 @@ class LookupTableStatus(Enum):
     SUB_TABLE_NOT_FOUND = 6
 
 
+class SaveToFlashState(Enum):
+    ENABLED = 0
+    DISABLED = 1  # all parameters are now RAM parameters
+
+
 class MeerstetterTEC(object):
     r"""
     Controlling TEC devices via serial.
@@ -227,6 +232,32 @@ class MeerstetterTEC(object):
                                                              instance=self.instance)
         status_id = DeviceStatus(status_id_int)
         return status_id
+
+    def set_automatic_save_to_flash(self, save_to_flash: SaveToFlashState) -> None:
+        """
+        Enable or disable the automatic save to flash mechanism.
+
+        :param save_to_flash: enable or disable the automatic save to flash mechanism
+        :type save_to_flash: SaveToFlashState
+        :return: None
+        """
+        logging.debug(f"set the automatic save to flash state for channel {self.instance} to {save_to_flash}")
+        self.mecom_basic_cmd.set_int32_value(address=self.address, parameter_id=108,
+                                             instance=self.instance, value=save_to_flash.value)
+
+    def get_automatic_save_to_flash(self) -> SaveToFlashState:
+        """
+        Get the automatic save to flash mechanism state.
+
+        :return: returns whether the automatic save to flash mechanism
+            is enabled or disabled
+        :rtype: SaveToFlashState
+        """
+        logging.debug(f"get the automatic save to flash state for channel {self.instance}")
+        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=108,
+                                                    instance=self.instance)
+        save_to_flash_state = SaveToFlashState(int(resp))
+        return save_to_flash_state
 
     def get_temperature(self) -> float:
         """
