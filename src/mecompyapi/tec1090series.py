@@ -137,7 +137,8 @@ class MeerstetterTEC(object):
                 self.address = self.get_device_address()
                 logging.debug(f"connected to {self.address}")
                 return
-            except ComCommandException:
+            except ComCommandException as e:
+                logging.debug(f"[ComCommandException] : {e}")
                 continue
         raise InstrumentException(f"Could not successfully query the controller address after {retries} retries...")
 
