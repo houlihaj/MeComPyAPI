@@ -21,6 +21,7 @@ class MeComBasicCmd:
         # self.address = self.get_device_address()
 
     # region Misc Functions
+    # noinspection PyMethodMayBeStatic
     def get_device_address(self) -> int:
         """
         The device reacts to the following cases:
@@ -199,7 +200,19 @@ class MeComBasicCmd:
         :type value: int
         :raises ComCommandException: When the command fails. Check the inner exception for details.
         """
-        raise NotImplementedError
+        mecom_var_convert = MeComVarConvert()
+        try:
+            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "VS")
+            tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
+            tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
+            tx_frame.payload = mecom_var_convert.add_int32(tx_frame.payload, value)
+            rx_frame = self.mequery_set.set(tx_frame=tx_frame)
+            return rx_frame
+
+        except Exception as e:
+            raise ComCommandException(f"Set INT32 Value failed: Address: {address}; "
+                                      f"ID: {parameter_id}; Detail: {instance} : {e}")
 
     def set_int64_value(self, address: int, parameter_id: int, instance: int, value: int):
         """
@@ -215,7 +228,19 @@ class MeComBasicCmd:
         :type value: int
         :raises ComCommandException: When the command fails. Check the inner exception for details.
         """
-        raise NotImplementedError
+        mecom_var_convert = MeComVarConvert()
+        try:
+            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "VS")
+            tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
+            tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
+            tx_frame.payload = mecom_var_convert.add_int64(tx_frame.payload, value)
+            rx_frame = self.mequery_set.set(tx_frame=tx_frame)
+            return rx_frame
+
+        except Exception as e:
+            raise ComCommandException(f"Set INT64 Value failed: Address: {address}; "
+                                      f"ID: {parameter_id}; Detail: {instance} : {e}")
 
     def set_float_value(self, address: int, parameter_id: int, instance: int, value: float):
         """
@@ -242,7 +267,8 @@ class MeComBasicCmd:
             return rx_frame
 
         except Exception as e:
-            raise ComCommandException(f"Set FLOAT Value failed: {e}")
+            raise ComCommandException(f"Set FLOAT32 Value failed: Address: {address}; "
+                                      f"ID: {parameter_id}; Detail: {instance} : {e}")
 
     def set_double_value(self, address: int, parameter_id: int, instance: int, value: int):
         """
@@ -258,7 +284,19 @@ class MeComBasicCmd:
         :type value: int
         :raises ComCommandException: When the command fails. Check the inner exception for details.
         """
-        raise NotImplementedError
+        mecom_var_convert = MeComVarConvert()
+        try:
+            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "VS")
+            tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
+            tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
+            tx_frame.payload = mecom_var_convert.add_double64(tx_frame.payload, value)
+            rx_frame = self.mequery_set.set(tx_frame=tx_frame)
+            return rx_frame
+
+        except Exception as e:
+            raise ComCommandException(f"Set DOUBLE64 Value failed: Address: {address}; "
+                                      f"ID: {parameter_id}; Detail: {instance} : {e}")
 
     def set_device_address(self, address: int, device_type: int, serial_number: str, set_address: int, option: int):
         """
@@ -312,10 +350,10 @@ if __name__ == "__main__":
     print(f"type(identify) : {type(identify)}")
     print("\n", end="")
 
-    device_type = mecom_basic_cmd.get_int32_value(address=2, parameter_id=100,
-                                                  instance=1)  # parameter_name : "Device Type"
-    print(f"device_type : {device_type}")
-    print(f"type(device_type) : {type(device_type)}")
+    device_type_ = mecom_basic_cmd.get_int32_value(address=2, parameter_id=100,
+                                                   instance=1)  # parameter_name : "Device Type"
+    print(f"device_type : {device_type_}")
+    print(f"type(device_type) : {type(device_type_)}")
     print("\n", end="")
 
     object_temperature = mecom_basic_cmd.get_float_value(address=2, parameter_id=1000,

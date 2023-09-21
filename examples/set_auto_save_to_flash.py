@@ -25,6 +25,8 @@ if __name__ == '__main__':
     print("status: {}".format(mc.get_device_status()))
     print("\n", end="")
 
+    mc.set_automatic_save_to_flash(save_to_flash=SaveToFlashState.DISABLED)
+
     save_to_flash_state: SaveToFlashState = mc.get_automatic_save_to_flash()
     print("save_to_flash_state: {}".format(mc.get_automatic_save_to_flash()))
 

@@ -178,7 +178,7 @@ class MeComVarConvert:
         stream += '{:08X}'.format(unpack('<I', pack('<f', value))[0])
         return stream
 
-    def add_double64(self, stream, value: int) -> None:
+    def add_double64(self, stream, value: int) -> str:
         """
         Writes a DOUBLE64 (.net double) to the stream.
 
@@ -186,7 +186,8 @@ class MeComVarConvert:
         :type stream:
         :param value: Value to be added.
         :type value: int
-        :return: None
+        :return:
+        :rtype: str
         """
         raise NotImplementedError
 
