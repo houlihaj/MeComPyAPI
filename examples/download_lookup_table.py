@@ -1,11 +1,22 @@
+import os
 import time
 import logging
+from pathlib import Path
 from mecompyapi.tec1090series import MeerstetterTEC, SaveToFlashState
 
 
 if __name__ == '__main__':
     # start logging
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s:%(module)s:%(levelname)s:%(message)s")
+
+    path = Path(
+        os.path.dirname(os.path.abspath(__file__))
+    )
+
+    filepath_ = os.path.join(
+        path.parents[0],
+        r"src\mecompyapi\mecom_tec\lookup_table\csv\LookupTable Sine ramp_0.1_degC_per_sec.csv"
+    )
 
     # initialize controller
     mc = MeerstetterTEC()
@@ -25,9 +36,7 @@ if __name__ == '__main__':
     print("status: {}".format(mc.get_device_status()))
     print("\n", end="")
 
-    mc.set_automatic_save_to_flash(save_to_flash=SaveToFlashState.DISABLED)
-
-    save_to_flash_state: SaveToFlashState = mc.get_automatic_save_to_flash()
-    print("save_to_flash_state: {}".format(mc.get_automatic_save_to_flash()))
+    mc.download_lookup_table(filepath=filepath_)
+    print("\n", end="")
 
     mc.tear()

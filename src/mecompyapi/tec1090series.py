@@ -789,7 +789,7 @@ class MeerstetterTEC(object):
             timeout: int = 0
             while True:
                 status: LutStatus = self.mecom_lut_cmd.get_status(address=self.address, instance=self.instance)
-                print(f"LutCmd status : {status}")
+                logging.info(f"LutCmd status : {status}")
                 if status == LutStatus.NO_INIT or status == LutStatus.ANALYZING:
                     timeout += 1
                     if timeout < 50:
@@ -799,7 +799,7 @@ class MeerstetterTEC(object):
                 else:
                     break
             lut_table_status = self.mecom_lut_cmd.get_status(address=self.address, instance=self.instance)
-            print(f"Lookup Table Status (52002): {lut_table_status}")
+            logging.info(f"Lookup Table Status (52002): {lut_table_status}")
         except LutException as e:
             raise LutException(f"Error while trying to download lookup table: {e}")
 
@@ -837,6 +837,92 @@ class MeerstetterTEC(object):
         logging.debug(f"get the lookup table status for channel {self.instance}")
         status = self.mecom_lut_cmd.get_status(address=self.address, instance=self.instance)
         return status
+
+    def execute_lookup_table(self, timeout: float = 300) -> bool:
+        """
+        Runs through the entire process for successfully executing a
+        lookup table.
+
+        Method to be used after a lookup table has been successfully
+        downloaded to the TEC controller.
+
+        The method will time out if the lookup table does not complete
+        its execution within the defined timeout period.
+
+        :param timeout: Timeout period in units of seconds.
+        :type timeout: float
+        :return: True if the lookup table was executed successfully,
+            False otherwise.
+        :rtype: bool
+        """
+        logging.debug(f"execute the lookup table for channel {self.instance}")
+
+        success = False
+
+        # Stop an existing lookup table execution, if one exists
+        if self.get_lookup_table_status() == LutStatus.EXECUTING:
+            self.stop_lookup_table()
+
+        try:
+            self.start_lookup_table()
+
+            lut_status: LutStatus = self.get_lookup_table_status()
+            logging.info(f"lookup table status : {lut_status}")
+
+            if lut_status != LutStatus.EXECUTING:
+                raise LutException(
+                    f"The lookup status should be LutStatus.EXECUTING after starting the lookup table ; "
+                    f"instead the lookup status is {lut_status}."
+                )
+
+            # timeout = 300  # timeout is in units of seconds
+            runtime = 0.0
+            start_time = time.time()  # acquisition start
+            acq = 0
+            lut_status: LutStatus = self.get_lookup_table_status()
+            while lut_status == LutStatus.EXECUTING and runtime < timeout:
+                runtime = time.time() - start_time  # runtime is in units of seconds
+                time.sleep(0.1)
+
+                acq += 1
+
+                if acq % 20 == 0:
+                    logging.info(
+                        f"The object temperature is {self.get_temperature()} degC"
+                    )
+
+                if acq % 200 == 0:
+                    logging.info(f"lookup table status : {self.get_lookup_table_status()}")
+
+                    logging.info(
+                        f"The lookup table has been executing for {round(acq * 0.1)} seconds..."
+                    )
+
+                lut_status: LutStatus = self.get_lookup_table_status()
+
+            if runtime >= timeout:
+                raise LutException("Timeout raised while executing the Lookup Table ; "
+                                   "the lookup table took longer than expected to completely execute...")
+
+            logging.info(f"The Lookup Table has executed successfully after {round(runtime, 3)} seconds...")
+
+            success = True
+
+        except LutException as e:
+            success = False
+            raise e
+
+        except Exception as e:
+            success = False
+            raise e
+
+        finally:
+            if self.get_lookup_table_status() == LutStatus.EXECUTING:
+                self.stop_lookup_table()
+                logging.info("Lookup Table was force stopped ; this may be because the "
+                             "routine timed out while the lookup table was still executing...")
+
+            return success
 
     def _set_enable(self, enable: bool = True) -> None:
         """
@@ -970,7 +1056,8 @@ class MeerstetterTEC(object):
             "pid_part_damping": self.get_part_damping(),
             "thermal_regulation_mode": self.get_thermal_regulation_mode(),
             "positive_current_is": self.get_positive_current_is(),
-            "object_sensor_type": self.get_object_sensor_type()
+            "object_sensor_type": self.get_object_sensor_type(),
+            "output_stage_enable": self.get_output_stage_enable()
         }
         return settings
 

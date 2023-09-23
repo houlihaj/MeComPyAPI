@@ -35,3 +35,25 @@ class LutStatus(Enum):
     """
     Sub table could not be found.
     """
+
+
+class LutServerResponse(Enum):
+    """
+    Server response to the ?LT query command.
+    """
+    IDLE = 0
+    """
+    Idle
+    """
+    ERASING_OR_WRITING = 1
+    """
+    Erasing or Writing (Sent Data is ignored)
+    """
+    NEW_DATA_ACCEPTED = 2
+    """
+    New Data accepted
+    """
+    ERROR = 3
+    """
+    Error
+    """
