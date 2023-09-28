@@ -1,6 +1,7 @@
 import os
 import logging
 import time
+import datetime
 import statistics
 from enum import Enum
 from typing import Tuple, List, Optional
@@ -90,6 +91,22 @@ class LookupTableStatus(Enum):
 class SaveToFlashState(Enum):
     ENABLED = 0
     DISABLED = 1  # all parameters are now RAM parameters
+
+
+class FlashStatus(Enum):
+    ALL_SAVED_TO_FLASH = 0
+    """
+    All Parameters are saved to Flash
+    """
+    PENDING = 1
+    """
+    Save to Flash pending or in progress.
+    Please do not power off the device now.
+    """
+    DISABLED = 2
+    """
+    Saving to Flash is disabled
+    """
 
 
 class MeerstetterTEC(object):
@@ -260,6 +277,16 @@ class MeerstetterTEC(object):
         save_to_flash_state = SaveToFlashState(int(resp))
         return save_to_flash_state
 
+    def get_flash_status(self):
+        """
+
+        """
+        logging.debug(f"get the flash status for channel {self.instance}")
+        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=109,
+                                                    instance=self.instance)
+        flash_status = FlashStatus(int(resp))
+        return flash_status
+
     def get_temperature(self) -> float:
         """
         Get object temperature of channel to desired value.
@@ -272,17 +299,57 @@ class MeerstetterTEC(object):
                                                                   instance=self.instance)
         return object_temperature
 
+    def get_sink_temperature(self) -> float:
+        """
+        Get the sink temperature of channel.
+
+        :return: The sink temperature in units of degrees Celsius (degC).
+        :rtype: float
+        """
+        logging.debug(f"get sink temperature for channel {self.instance}")
+        sink_temperature = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1001,
+                                                                instance=self.instance)
+        return sink_temperature
+
     def get_setpoint_temperature(self) -> float:
         """
         Get the setpoint temperature from the TEC controller
 
         :return: the setpoint temperature from the TEC controller
+            in units of degC
         :rtype: float
         """
         logging.debug(f"get the setpoint temperature for channel {self.instance}")
         setpoint = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1010,
                                                         instance=self.instance)
         return setpoint
+
+    def get_ramp_nominal_object_temperature(self) -> float:
+        """
+        Get the (ramp) nominal object temperature from the TEC controller
+
+        :return: the (ramp) nominal object temperature from the TEC controller
+            in units of degC
+        :rtype: float
+        """
+        logging.debug(f"get the (ramp) nominal object temperature for channel {self.instance}")
+        ramp_nominal_temperature = (
+            self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1011,
+                                                 instance=self.instance)
+        )
+        return ramp_nominal_temperature
+
+    def get_thermal_power_model_current(self) -> float:
+        """
+        Get the thermal power model current from the TEC controller
+
+        :return: the thermal power model current in units of Amps (A)
+        :rtype: float
+        """
+        logging.debug(f"get the thermal power model current for channel {self.instance}")
+        current = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1012,
+                                                       instance=self.instance)
+        return current
 
     def get_tec_current(self) -> float:
         """
@@ -307,6 +374,19 @@ class MeerstetterTEC(object):
         output_voltage = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1021,
                                                               instance=self.instance)
         return output_voltage
+
+    def get_pid_control_variable(self) -> float:
+        """
+        Get the PID Control Variable percentage. Part of the Temperature Control
+        PID Status section.
+
+        :return: The PID Control Variable as a percentage (%).
+        :rtype: float
+        """
+        logging.debug(f"get the PID control variable percentage for channel {self.instance}")
+        pid_control_variable = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1032,
+                                                                    instance=self.instance)
+        return pid_control_variable
 
     def get_device_temperature(self) -> float:
         """
@@ -954,6 +1034,37 @@ class MeerstetterTEC(object):
         :rtype: None
         """
         self._set_enable(False)
+
+    def get_monitor_data_logger(self, header: bool = False) -> str:
+        """
+
+        :param header:
+        :type header:
+        :return:
+        :rtype: str
+        """
+        data_log = ""
+        if header is True:
+            data_log += (
+                "Time;CH 1 Object Temperature;CH 1 Sink Temperature;CH 1 Target Object Temperature;"
+                "CH 1 (Ramp) Nominal Temperature;CH 1 Thermal Power Model Current;CH 1 Actual Output Current;"
+                "CH 1 Actual Output Voltage;CH 1 PID Control Variable;\n"
+            )
+        time_datetime: datetime.datetime = datetime.datetime.fromtimestamp(time.time())
+        object_temperature: float = self.get_temperature()
+        sink_temperature: float = self.get_sink_temperature()
+        setpoint_temperature: float = self.get_setpoint_temperature()
+        ramp_nominal_temperature: float = self.get_ramp_nominal_object_temperature()
+        thermal_power_model_current: float = self.get_thermal_power_model_current()
+        actual_output_current: float = self.get_tec_current()
+        actual_output_voltage: float = self.get_tec_voltage()
+        pid_control_variable: float = self.get_pid_control_variable()
+        data_log += (
+            f"{time_datetime};{object_temperature};{sink_temperature};{setpoint_temperature};"
+            f"{ramp_nominal_temperature};{thermal_power_model_current};{actual_output_current};"
+            f"{actual_output_voltage};{pid_control_variable};\n"
+        )
+        return data_log
 
     def wait_for_stable_temperature(self, timeout: int = 120) -> None:
         """
