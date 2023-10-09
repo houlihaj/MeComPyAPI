@@ -1,8 +1,11 @@
 import random
 
+from typing import Union
+
 from mecompyapi.mecom_core.mecom_frame import MeComFrame, MeComPacket, ERcvType
 from mecompyapi.phy_wrapper.int_mecom_phy import IntMeComPhy, MeComPhyTimeoutException
 from mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
+from mecompyapi.phy_wrapper.mecom_phy_ftdi import MeComPhyFtdi
 
 
 class SetServerErrorException(Exception):
@@ -55,10 +58,7 @@ class MeComQuerySet:
     otherwise it will throw an exception.
     """
 
-    # sequence_number: int
-    # statistics = Statistics()
-
-    def __init__(self, phy_com: MeComPhySerialPort):
+    def __init__(self, phy_com: Union[MeComPhySerialPort, MeComPhyFtdi]):
         """
         Initializes the communication interface.
         This object can then be passed to the Command objects like MeBasicCmd.
@@ -73,13 +73,7 @@ class MeComQuerySet:
         self.is_ready = False
         self.version_is_okay = False
         self.default_device_address = 1
-        
-    # def get(self):
-    #     raise NotImplementedError
-    #
-    # def set(self):
-    #     raise NotImplementedError
-    
+
     def get_is_ready(self):
         """
         true when the interface is ready to use; false if not.
@@ -302,7 +296,8 @@ class MeComQuerySet:
             )
         if rx_frame.sequence_number != self.sequence_number:
             raise GeneralException(
-                f"Query failed : Wrong Sequence Number received. Received {rx_frame.sequence_number} ; Expected {self.sequence_number}"
+                f"Query failed : Wrong Sequence Number received. "
+                f"Received {rx_frame.sequence_number} ; Expected {self.sequence_number}"
             )
         if rx_frame.address != tx_frame.address:
             raise GeneralException(
@@ -357,7 +352,8 @@ class MeComQuerySet:
         # Communication failed, check last error
         if rx_frame.sequence_number != self.sequence_number:
             raise GeneralException(
-                f"Set failed: Wrong Sequence Number received. Received {rx_frame.sequence_number} ; Expected {self.sequence_number}"
+                f"Set failed: Wrong Sequence Number received. "
+                f"Received {rx_frame.sequence_number} ; Expected {self.sequence_number}"
             )
 
         if rx_frame.address != tx_frame.address:

@@ -16,18 +16,4 @@ if __name__ == '__main__':
     print(f"identity: {identity}")
     print("\n", end="")
 
-    print(f"status: {mc.get_device_status()}")
-    print("\n", end="")
-
-    mc.reset()
-    print(f"status: {mc.get_device_status()}")
-    time.sleep(2.0)  # Wait time of 2 seconds is required to maintain connection.
-    print(f"status: {mc.get_device_status()}")
-    print("\n", end="")
-
-    settings = mc.get_all_settings()
-    print(f"settings:\n", end="")
-    for key in settings:
-        print(f"{key} : {settings[key]}")
-
     mc.tear()
