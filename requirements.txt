@@ -1,2 +1,3 @@
 pyserial
 pythoncrc
+ftd2xx

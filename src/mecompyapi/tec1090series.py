@@ -4,13 +4,14 @@ import time
 import datetime
 import statistics
 from enum import Enum
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Union
 
 from mecompyapi.mecom_core.mecom_query_set import MeComQuerySet
 from mecompyapi.mecom_core.mecom_basic_cmd import MeComBasicCmd
 from mecompyapi.mecom_core.com_command_exception import ComCommandException
 
-from mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort, InstrumentException, ResponseTimeout
+from mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort, InstrumentException
+from mecompyapi.phy_wrapper.mecom_phy_ftdi import MeComPhyFtdi
 
 from mecompyapi.mecom_tec.lookup_table.lut_cmd import LutCmd
 from mecompyapi.mecom_tec.lookup_table.lut_status import LutStatus
@@ -118,14 +119,14 @@ class MeerstetterTEC(object):
     ./meerstetter/pyMeCom/mecom/commands.py
     """
     def __init__(self, *args, **kwargs) -> None:
-        self.phy_com = MeComPhySerialPort()
+        self.phy_com = None  # type: Optional[Union[MeComPhySerialPort, MeComPhyFtdi]]
         self.mequery_set = None  # type: Optional[MeComQuerySet]
         self.mecom_basic_cmd = None  # type: Optional[MeComBasicCmd]
         self.mecom_lut_cmd = None  # type: Optional[LutCmd]
         self.address = None  # type: Optional[int]
         self.instance = None  # type: Optional[int]
 
-    def connect(self, port: str = "COM9", instance: int = 1):
+    def connect_serial_port(self, port: str = "COM9", instance: int = 1):
         """
         Connects to a serial port. On Windows, these are typically 'COMX' where X
         is the number of the port. In Linux, they are often /dev/ttyXXXY where XXX
@@ -143,11 +144,42 @@ class MeerstetterTEC(object):
         :type instance: int
         :return: None
         """
+        self.phy_com = MeComPhySerialPort()
+
         self.instance = instance
         self.phy_com.connect(port_name=port)
         mequery_set = MeComQuerySet(phy_com=self.phy_com)
         self.mecom_basic_cmd = MeComBasicCmd(mequery_set=mequery_set)
         self.mecom_lut_cmd = LutCmd(mecom_query_set=mequery_set)
+        retries = 3
+        for _ in range(retries):
+            try:
+                self.address = self.get_device_address()
+                logging.debug(f"connected to {self.address}")
+                return
+            except ComCommandException as e:
+                logging.debug(f"[ComCommandException] : {e}")
+                continue
+        raise InstrumentException(f"Could not successfully query the controller address after {retries} retries...")
+
+    def connect_ftdi(self, id_str: str = "DK0E1IDC", instance: int = 1):
+        """
+        Connect to the controller using the FTDI chip drivers.
+
+        :param id_str:
+        :type id_str: str
+        :param instance:
+        :type instance: int
+        :return: None
+        """
+        self.phy_com = MeComPhyFtdi()
+
+        self.instance = instance
+        self.phy_com.connect(id_str=id_str)
+        mequery_set = MeComQuerySet(phy_com=self.phy_com)
+        self.mecom_basic_cmd = MeComBasicCmd(mequery_set=mequery_set)
+        self.mecom_lut_cmd = LutCmd(mecom_query_set=mequery_set)
+
         retries = 3
         for _ in range(retries):
             try:
