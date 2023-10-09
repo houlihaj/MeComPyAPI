@@ -1,4 +1,5 @@
 import ftd2xx
+from ftd2xx import FTD2XX
 
 from mecompyapi.phy_wrapper.int_mecom_phy import (
     IntMeComPhy, MeComPhyInterfaceException, MeComPhyTimeoutException
@@ -28,13 +29,13 @@ class MeComPhyFtdi(IntMeComPhy):
         """
         raise NotImplementedError
 
-    def connect(self, id_str: str, timeout: int = 1, baudrate: int = 57600):
+    def connect(self, id_str: str, timeout: int = 1, baudrate: int = 57600) -> None:
         """
-        Connects to a serial port. On Windows, these are typically 'COMX' where X is the number of the port. In Linux,
-        they are often /dev/ttyXXXY where XXX usually indicates if it is a serial or USB port, and Y indicates the
-        number. E.g. /dev/ttyUSB0 on Linux and 'COM7' on Windows
+        Open a handle to an usb device by serial number(default), description or
+        location(Windows only) depending on value of flags and return an FTD2XX
+        instance for it.
 
-        :param id_str:
+        :param id_str: ID string from listDevices
         :type id_str: str
         :param timeout: Time in seconds for read timeout. If timeout happens, read returns empty string.
         :type timeout: int
@@ -42,9 +43,10 @@ class MeComPhyFtdi(IntMeComPhy):
         :type baudrate: int
         :raises SerialException:
         :raises InstrumentConnectionError:
+        :return: None
         """
         id_str_bytes: bytes = id_str.encode()
-        self.ftdi = ftd2xx.openEx(id_str=id_str_bytes)
+        self.ftdi: FTD2XX = ftd2xx.openEx(id_str=id_str_bytes)
         self.ftdi.purge(mask=3)  # purges receive and transmit buffer in the device
         self.ftdi.setTimeouts(read=timeout * 1000, write=timeout * 1000)
 

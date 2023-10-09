@@ -164,7 +164,13 @@ class MeerstetterTEC(object):
 
     def connect_ftdi(self, id_str: str = "DK0E1IDC", instance: int = 1):
         """
+        Connect to the controller using the FTDI chip drivers.
 
+        :param id_str:
+        :type id_str: str
+        :param instance:
+        :type instance: int
+        :return: None
         """
         self.phy_com = MeComPhyFtdi()
 
