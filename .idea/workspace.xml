@@ -5,6 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6f6d24ee-0e50-4136-ad46-6aaadc2ff813" name="Changes" comment="">
+<<<<<<< HEAD
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/connect_ftdi.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/connect_ftdi.py" afterDir="false" />
@@ -19,6 +20,9 @@
       <change beforePath="$PROJECT_DIR$/src/mecompyapi/phy_wrapper/mecom_phy_ftdi.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mecompyapi/phy_wrapper/mecom_phy_ftdi.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mecompyapi/phy_wrapper/mecom_phy_serial_port.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mecompyapi/phy_wrapper/mecom_phy_serial_port.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/mecompyapi/tec1090series.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/mecompyapi/tec1090series.py" afterDir="false" />
+=======
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+>>>>>>> 3622cb4a2bad947c32d11fd47eadc20c870ee35d
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,6 +58,7 @@
     &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
 }</component>
+<<<<<<< HEAD
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -61,6 +66,8 @@
       </set>
     </attachedChunks>
   </component>
+=======
+>>>>>>> 3622cb4a2bad947c32d11fd47eadc20c870ee35d
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">

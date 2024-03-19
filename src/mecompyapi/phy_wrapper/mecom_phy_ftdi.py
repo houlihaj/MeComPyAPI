@@ -16,7 +16,7 @@ class MeComPhyFtdi(IntMeComPhy):
     """
     def __init__(self):
         """
-        Implements the IMeComPhy interface for the FTDI chip drivers.        
+        Implements the IMeComPhy interface for the FTDI chip drivers.
         """
         super().__init__()
         self.ftdi: Optional[FTD2XX] = None
@@ -101,8 +101,8 @@ class MeComPhyFtdi(IntMeComPhy):
         """
         Tries to read data from the physical interface or throws a timeout exception.
 
-        Reads the available data in the physical interface buffer and returns immediately. 
-        If the receiving buffer is empty, it tries to read at least one byte. 
+        Reads the available data in the physical interface buffer and returns immediately.
+        If the receiving buffer is empty, it tries to read at least one byte.
         It will wait till the timeout occurs if nothing is received.
         Must probably be called several times to receive the whole frame.
 

@@ -69,7 +69,7 @@ class MeComQuerySet:
         self.phy_com = phy_com
         self.me_frame = MeComFrame(int_phy_com=phy_com)
         self.sequence_number: int = random.randrange(0, 65_535, 1)
-        
+
         self.is_ready: bool = False
         self.version_is_okay: bool = False
         self.default_device_address: int = 1
@@ -78,21 +78,21 @@ class MeComQuerySet:
         """
         True when the interface is ready to use; false if not.
 
-        Is automatically set to false if an interface error or timeout error occurs. 
+        Is automatically set to false if an interface error or timeout error occurs.
         Must be set from application level with set_is_ready() function.
 
         :return:
         :rtype: bool
         """
         return self.is_ready
-    
+
     def set_is_ready(self, is_ready: bool) -> None:
         """
         Used from application level to inform other threads that the interface is ready.
-        
+
         Usually the application device connector searches for a valid device
         and sets then the interface as ready.
-        
+
         :param is_ready:
         :type is_ready: bool
         :raises NotSupportedException: Thrown when another thread than the creator of
@@ -105,7 +105,7 @@ class MeComQuerySet:
         """
         True when the application connector has recognized a valid device firmware version;
 
-        Is automatically set to false if an interface error or timeout error occurs. 
+        Is automatically set to false if an interface error or timeout error occurs.
         Must be set from application level with SetVersionIsOK() function.
 
         :return:
@@ -129,8 +129,8 @@ class MeComQuerySet:
     def _version_is_okay(self) -> bool:
         """
         true when the application connector has recognized a valid device firmware version;
-        
-        Is automatically set to false if an interface error or timeout error occurs. 
+
+        Is automatically set to false if an interface error or timeout error occurs.
         Must be set from application level with SetVersionIsOK() function.
 
         :return:

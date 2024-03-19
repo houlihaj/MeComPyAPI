@@ -89,10 +89,11 @@ class MeComFrame:
     Handles the communication Frame level of the Meerstetter Engineering GmbH
     Communication protocol.
     """
+
     def __init__(self, int_phy_com: MeComPhySerialPort, statistics: Optional = None):
         """
         Saves the needed interface internally for further use.
-        
+
         :param int_phy_com: Interface to the physical interface.
         :type int_phy_com: MeComPhySerialPort
         :param statistics: Reference to the Statistics module.
@@ -105,10 +106,10 @@ class MeComFrame:
 
     def send_frame(self, tx_frame: MeComPacket) -> None:
         """
-        Serializes the given Data structure to a proper 
-        frame and sends it to the physical interface. 
+        Serializes the given Data structure to a proper
+        frame and sends it to the physical interface.
         It returns immediately.
-        
+
         :param tx_frame: Data to send.
         :type tx_frame: MeComPacket
         :raises MeComPhyInterfaceException:
