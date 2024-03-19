@@ -89,10 +89,11 @@ class MeComFrame:
     Handles the communication Frame level of the Meerstetter Engineering GmbH
     Communication protocol.
     """
+
     def __init__(self, int_phy_com: MeComPhySerialPort, statistics: Optional = None):
         """
         Saves the needed interface internally for further use.
-        
+
         :param int_phy_com: Interface to the physical interface.
         :type int_phy_com: MeComPhySerialPort
         :param statistics: Reference to the Statistics module.
@@ -105,10 +106,10 @@ class MeComFrame:
 
     def send_frame(self, tx_frame: MeComPacket) -> None:
         """
-        Serializes the given Data structure to a proper 
-        frame and sends it to the physical interface. 
+        Serializes the given Data structure to a proper
+        frame and sends it to the physical interface.
         It returns immediately.
-        
+
         :param tx_frame: Data to send.
         :type tx_frame: MeComPacket
         :raises MeComPhyInterfaceException:
@@ -126,7 +127,7 @@ class MeComFrame:
 
         tx_stream += tx_frame.payload
 
-        self.last_crc = self._calc_crc_citt(frame=tx_stream.encode())
+        self.last_crc: int = self._calc_crc_citt(frame=tx_stream.encode())
 
         tx_stream = mecom_var_convert.add_uint16(stream=tx_stream, value=self.last_crc)
 
@@ -142,7 +143,7 @@ class MeComFrame:
         :return: Received data.
         :rtype: MeComPacket
         """
-        rx_frame = MeComPacket()
+        rx_frame: MeComPacket = MeComPacket()
         rx_frame.receive_type = ERcvType.EMPTY
 
         rx_stream: str = self.phy_com.get_data_or_timeout()
@@ -151,7 +152,9 @@ class MeComFrame:
 
         return rx_frame
 
-    def _decode_frame(self, rx_frame: MeComPacket, rx_stream: str, local_rx_buf: Optional = None) -> MeComPacket:
+    def _decode_frame(
+            self, rx_frame: MeComPacket, rx_stream: str, local_rx_buf: Optional = None
+    ) -> MeComPacket:
         """
 
         :param rx_frame:

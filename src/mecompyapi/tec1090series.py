@@ -10,7 +10,7 @@ from mecompyapi.mecom_core.mecom_query_set import MeComQuerySet
 from mecompyapi.mecom_core.mecom_basic_cmd import MeComBasicCmd
 from mecompyapi.mecom_core.com_command_exception import ComCommandException
 
-from mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort, InstrumentException
+from mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
 from mecompyapi.phy_wrapper.mecom_phy_ftdi import MeComPhyFtdi
 
 from mecompyapi.mecom_tec.lookup_table.lut_cmd import LutCmd
@@ -119,12 +119,12 @@ class MeerstetterTEC(object):
     ./meerstetter/pyMeCom/mecom/commands.py
     """
     def __init__(self, *args, **kwargs) -> None:
-        self.phy_com = None  # type: Optional[Union[MeComPhySerialPort, MeComPhyFtdi]]
-        self.mequery_set = None  # type: Optional[MeComQuerySet]
-        self.mecom_basic_cmd = None  # type: Optional[MeComBasicCmd]
-        self.mecom_lut_cmd = None  # type: Optional[LutCmd]
-        self.address = None  # type: Optional[int]
-        self.instance = None  # type: Optional[int]
+        self.phy_com: Optional[MeComPhySerialPort | MeComPhyFtdi] = None
+        self.mequery_set: Optional[MeComQuerySet] = None
+        self.mecom_basic_cmd: Optional[MeComBasicCmd] = None
+        self.mecom_lut_cmd: Optional[LutCmd] = None
+        self.address: Optional[int] = None
+        self.instance: Optional[int] = None
 
     def connect_serial_port(self, port: str = "COM9", instance: int = 1):
         """
@@ -144,13 +144,20 @@ class MeerstetterTEC(object):
         :type instance: int
         :return: None
         """
-        self.phy_com = MeComPhySerialPort()
+        self.instance: int = instance
 
-        self.instance = instance
+        self.phy_com: MeComPhySerialPort = MeComPhySerialPort()
         self.phy_com.connect(port_name=port)
+
         mequery_set = MeComQuerySet(phy_com=self.phy_com)
         self.mecom_basic_cmd = MeComBasicCmd(mequery_set=mequery_set)
+
+        # Get Identification String
+        fw_id_str: str = self.get_firmware_identification_string(broadcast=True)
+        logging.debug(f"Connected device firmware identification string (?IF) : {fw_id_str}")
+
         self.mecom_lut_cmd = LutCmd(mecom_query_set=mequery_set)
+
         retries = 3
         for _ in range(retries):
             try:
@@ -160,7 +167,9 @@ class MeerstetterTEC(object):
             except ComCommandException as e:
                 logging.debug(f"[ComCommandException] : {e}")
                 continue
-        raise InstrumentException(f"Could not successfully query the controller address after {retries} retries...")
+        raise ComCommandException(
+            f"Could not successfully query the controller address after {retries} retries..."
+        )
 
     def connect_ftdi(self, id_str: str = "DK0E1IDC", instance: int = 1):
         """
@@ -172,9 +181,10 @@ class MeerstetterTEC(object):
         :type instance: int
         :return: None
         """
+        self.instance: int = instance
+
         self.phy_com = MeComPhyFtdi()
 
-        self.instance = instance
         self.phy_com.connect(id_str=id_str)
         mequery_set = MeComQuerySet(phy_com=self.phy_com)
         self.mecom_basic_cmd = MeComBasicCmd(mequery_set=mequery_set)
@@ -189,12 +199,16 @@ class MeerstetterTEC(object):
             except ComCommandException as e:
                 logging.debug(f"[ComCommandException] : {e}")
                 continue
-        raise InstrumentException(f"Could not successfully query the controller address after {retries} retries...")
+        raise ComCommandException(
+            f"Could not successfully query the controller address after {retries} retries..."
+        )
 
-    def tear(self):
+    def tear(self) -> None:
         """
         Tear should always be called when the instrument is being disconnected. It should
         also be called when the program is ending.
+
+        :return: None
         """
         self.phy_com.tear()
 
@@ -206,6 +220,27 @@ class MeerstetterTEC(object):
         """
         self.mecom_basic_cmd.reset_device(address=self.address, channel=self.instance)
 
+    def get_firmware_identification_string(self, broadcast: bool = False) -> str:
+        """
+        Query the Firmware Identification String of the device.
+
+        Using address 0, the device will always answer independent of its address. The
+        device is in broadcast mode and receives a package when using address 0.
+
+        The device should only be in broadcast mode during the connection routine. Once
+        connected, all methods should use the unique address of the device.
+
+        :param broadcast: When True, the device will answer independent of its
+            unique address.
+        :type broadcast: bool
+        :return: The firmware identification string of the device.
+        :rtype: str
+        """
+        logging.debug(f"get the firmware identification string for channel {self.instance}")
+        address = 0 if broadcast else self.address
+        identify: str = self.mecom_basic_cmd.get_ident_string(address=address, channel=self.instance)
+        return identify
+
     def get_id(self) -> str:
         """
         Query the Identification String of the device.
@@ -215,11 +250,11 @@ class MeerstetterTEC(object):
             Version.
         :rtype: str
         """
-        model = self.get_device_type()
-        sn = self.get_serial_number()
-        hw = self.get_hardware_version()
-        fw = self.get_firmware_version()
-        identity = f"Meerstetter,TEC{model},{sn},{hw},{fw}"
+        model: int = self.get_device_type()
+        sn: int = self.get_serial_number()
+        hw: int = self.get_hardware_version()
+        fw: int = self.get_firmware_version()
+        identity: str = f"Meerstetter,TEC{model},{sn},{hw},{fw}"
         return identity
 
     def get_device_type(self) -> int:
@@ -230,8 +265,9 @@ class MeerstetterTEC(object):
         :rtype: int
         """
         logging.debug(f"get device type for channel {self.instance}")
-        device_type = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=100,
-                                                           instance=self.instance)
+        device_type = self.mecom_basic_cmd.get_int32_value(
+            address=self.address, parameter_id=100, instance=self.instance
+        )
         return device_type
 
     def get_hardware_version(self) -> int:
@@ -242,8 +278,9 @@ class MeerstetterTEC(object):
         :rtype: int
         """
         logging.debug(f"get hardware version for channel {self.instance}")
-        hardware_version = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=101,
-                                                                instance=self.instance)
+        hardware_version = self.mecom_basic_cmd.get_int32_value(
+            address=self.address, parameter_id=101, instance=self.instance
+        )
         return hardware_version
 
     def get_serial_number(self) -> int:
@@ -254,8 +291,9 @@ class MeerstetterTEC(object):
         :rtype: int
         """
         logging.debug(f"get serial number for channel {self.instance}")
-        serial_number = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=102,
-                                                             instance=self.instance)
+        serial_number = self.mecom_basic_cmd.get_int32_value(
+            address=self.address, parameter_id=102, instance=self.instance
+        )
         return serial_number
 
     def get_firmware_version(self) -> int:
@@ -266,8 +304,9 @@ class MeerstetterTEC(object):
         :rtype: int
         """
         logging.debug(f"get firmware version for channel {self.instance}")
-        firmware_version = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=103,
-                                                                instance=self.instance)
+        firmware_version = self.mecom_basic_cmd.get_int32_value(
+            address=self.address, parameter_id=103, instance=self.instance
+        )
         return firmware_version
 
     def get_device_status(self) -> DeviceStatus:
@@ -278,8 +317,9 @@ class MeerstetterTEC(object):
         :rtype: DeviceStatus
         """
         logging.debug(f"get device status for channel {self.instance}")
-        status_id_int = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=104,
-                                                             instance=self.instance)
+        status_id_int = self.mecom_basic_cmd.get_int32_value(
+            address=self.address, parameter_id=104, instance=self.instance
+        )
         status_id = DeviceStatus(status_id_int)
         return status_id
 
@@ -292,8 +332,9 @@ class MeerstetterTEC(object):
         :return: None
         """
         logging.debug(f"set the automatic save to flash state for channel {self.instance} to {save_to_flash}")
-        self.mecom_basic_cmd.set_int32_value(address=self.address, parameter_id=108,
-                                             instance=self.instance, value=save_to_flash.value)
+        self.mecom_basic_cmd.set_int32_value(
+            address=self.address, parameter_id=108, instance=self.instance, value=save_to_flash.value
+        )
 
     def get_automatic_save_to_flash(self) -> SaveToFlashState:
         """
@@ -304,8 +345,9 @@ class MeerstetterTEC(object):
         :rtype: SaveToFlashState
         """
         logging.debug(f"get the automatic save to flash state for channel {self.instance}")
-        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=108,
-                                                    instance=self.instance)
+        resp = self.mecom_basic_cmd.get_int32_value(
+            address=self.address, parameter_id=108, instance=self.instance
+        )
         save_to_flash_state = SaveToFlashState(int(resp))
         return save_to_flash_state
 
@@ -314,8 +356,9 @@ class MeerstetterTEC(object):
 
         """
         logging.debug(f"get the flash status for channel {self.instance}")
-        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=109,
-                                                    instance=self.instance)
+        resp = self.mecom_basic_cmd.get_int32_value(
+            address=self.address, parameter_id=109, instance=self.instance
+        )
         flash_status = FlashStatus(int(resp))
         return flash_status
 
@@ -327,8 +370,9 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get object temperature for channel {self.instance}")
-        object_temperature = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1000,
-                                                                  instance=self.instance)
+        object_temperature = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=1000, instance=self.instance
+        )
         return object_temperature
 
     def get_sink_temperature(self) -> float:
@@ -339,8 +383,9 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get sink temperature for channel {self.instance}")
-        sink_temperature = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1001,
-                                                                instance=self.instance)
+        sink_temperature = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=1001, instance=self.instance
+        )
         return sink_temperature
 
     def get_setpoint_temperature(self) -> float:
@@ -352,8 +397,9 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get the setpoint temperature for channel {self.instance}")
-        setpoint = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1010,
-                                                        instance=self.instance)
+        setpoint = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=1010, instance=self.instance
+        )
         return setpoint
 
     def get_ramp_nominal_object_temperature(self) -> float:
@@ -366,8 +412,9 @@ class MeerstetterTEC(object):
         """
         logging.debug(f"get the (ramp) nominal object temperature for channel {self.instance}")
         ramp_nominal_temperature = (
-            self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1011,
-                                                 instance=self.instance)
+            self.mecom_basic_cmd.get_float_value(
+                address=self.address, parameter_id=1011, instance=self.instance
+            )
         )
         return ramp_nominal_temperature
 
@@ -379,8 +426,9 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get the thermal power model current for channel {self.instance}")
-        current = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1012,
-                                                       instance=self.instance)
+        current = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=1012, instance=self.instance
+        )
         return current
 
     def get_tec_current(self) -> float:
@@ -391,8 +439,9 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get output current for channel {self.instance}")
-        output_current = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1020,
-                                                              instance=self.instance)
+        output_current = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=1020, instance=self.instance
+        )
         return output_current
 
     def get_tec_voltage(self) -> float:
@@ -403,8 +452,9 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get output voltage for channel {self.instance}")
-        output_voltage = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1021,
-                                                              instance=self.instance)
+        output_voltage = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=1021, instance=self.instance
+        )
         return output_voltage
 
     def get_pid_control_variable(self) -> float:
@@ -416,8 +466,9 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get the PID control variable percentage for channel {self.instance}")
-        pid_control_variable = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1032,
-                                                                    instance=self.instance)
+        pid_control_variable = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=1032, instance=self.instance
+        )
         return pid_control_variable
 
     def get_device_temperature(self) -> float:
@@ -428,8 +479,9 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get the device temperature for channel {self.instance}")
-        device_temp = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=1063,
-                                                           instance=self.instance)
+        device_temp = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=1063, instance=self.instance
+        )
         return device_temp
 
     def is_temperature_stable(self) -> bool:
@@ -439,8 +491,9 @@ class MeerstetterTEC(object):
         :return: True if the temperature is stable, False otherwise
         :rtype: bool
         """
-        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=1200,
-                                                    instance=self.instance)
+        resp = self.mecom_basic_cmd.get_int32_value(
+            address=self.address, parameter_id=1200, instance=self.instance
+        )
         stability = TemperatureStability(int(resp))
         logging.debug(f"Temperature Stability: {stability.name}")
         return stability == TemperatureStability.STABLE
@@ -454,8 +507,9 @@ class MeerstetterTEC(object):
         :return: None
         """
         logging.debug(f"set the input selection for channel {self.instance} to {input_selection}")
-        self.mecom_basic_cmd.set_int32_value(address=self.address, parameter_id=2000,
-                                             instance=self.instance, value=input_selection.value)
+        self.mecom_basic_cmd.set_int32_value(
+            address=self.address, parameter_id=2000, instance=self.instance, value=input_selection.value
+        )
 
     def get_input_selection(self) -> ControlInputSelection:
         """
@@ -465,8 +519,9 @@ class MeerstetterTEC(object):
         :rtype: ControlInputSelection
         """
         logging.debug(f"get the input selection for channel {self.instance}")
-        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=2000,
-                                                    instance=self.instance)
+        resp = self.mecom_basic_cmd.get_int32_value(
+            address=self.address, parameter_id=2000, instance=self.instance
+        )
         input_selection = ControlInputSelection(int(resp))
         return input_selection
 
@@ -479,8 +534,9 @@ class MeerstetterTEC(object):
         :return: None
         """
         logging.debug(f"set the output stage enable for channel {self.instance} to {output_stage_enable}")
-        self.mecom_basic_cmd.set_int32_value(address=self.address, parameter_id=2010,
-                                             instance=self.instance, value=output_stage_enable.value)
+        self.mecom_basic_cmd.set_int32_value(
+            address=self.address, parameter_id=2010, instance=self.instance, value=output_stage_enable.value
+        )
 
     def get_output_stage_enable(self) -> OutputStageEnable:
         """
@@ -490,8 +546,9 @@ class MeerstetterTEC(object):
         :rtype: OutputStageEnable
         """
         logging.debug(f"get the output stage enable for channel {self.instance}")
-        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=2010,
-                                                    instance=self.instance)
+        resp = self.mecom_basic_cmd.get_int32_value(
+            address=self.address, parameter_id=2010, instance=self.instance
+        )
         return OutputStageEnable(int(resp))
 
     def set_current_limitation(self, current_limit_amps: float) -> None:
@@ -502,9 +559,12 @@ class MeerstetterTEC(object):
         :type current_limit_amps: float
         :return: None
         """
-        logging.debug(f"set current limitation for channel {self.instance} to {float(current_limit_amps)} Amps")
-        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=2030,
-                                             instance=self.instance, value=float(current_limit_amps))
+        logging.debug(
+            f"set current limitation for channel {self.instance} to {float(current_limit_amps)} Amps"
+        )
+        self.mecom_basic_cmd.set_float_value(
+            address=self.address, parameter_id=2030, instance=self.instance, value=float(current_limit_amps)
+        )
 
     def get_current_limitation(self) -> float:
         """
@@ -514,8 +574,9 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get the current limitation for channel {self.instance}")
-        current_limit = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=2030,
-                                                             instance=self.instance)
+        current_limit = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=2030, instance=self.instance
+        )
         return current_limit
 
     def set_voltage_limitation(self, voltage_limit_volts: float) -> None:
@@ -526,9 +587,12 @@ class MeerstetterTEC(object):
         :type voltage_limit_volts: float
         :return: None
         """
-        logging.debug(f"set voltage limitation for channel {self.instance} to {float(voltage_limit_volts)} Volts")
-        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=2031,
-                                             instance=self.instance, value=float(voltage_limit_volts))
+        logging.debug(
+            f"set voltage limitation for channel {self.instance} to {float(voltage_limit_volts)} Volts"
+        )
+        self.mecom_basic_cmd.set_float_value(
+            address=self.address, parameter_id=2031, instance=self.instance, value=float(voltage_limit_volts)
+        )
 
     def get_voltage_limitation(self) -> float:
         """
@@ -539,8 +603,9 @@ class MeerstetterTEC(object):
         """
         logging.debug(f"get the voltage limitation for channel {self.instance}")
 
-        voltage_limit = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=2031,
-                                                             instance=self.instance)
+        voltage_limit = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=2031, instance=self.instance
+        )
         return voltage_limit
 
     def set_current_error_threshold(self, threshold_amps: float) -> None:
@@ -551,9 +616,12 @@ class MeerstetterTEC(object):
         :type threshold_amps: float
         :return: none
         """
-        logging.debug(f"set current error threshold for channel {self.instance} to {float(threshold_amps)} Amps")
-        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=2032,
-                                             instance=self.instance, value=float(threshold_amps))
+        logging.debug(
+            f"set current error threshold for channel {self.instance} to {float(threshold_amps)} Amps"
+        )
+        self.mecom_basic_cmd.set_float_value(
+            address=self.address, parameter_id=2032, instance=self.instance, value=float(threshold_amps)
+        )
 
     def get_current_error_threshold(self) -> float:
         """
@@ -563,8 +631,9 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get the current error threshold for channel {self.instance}")
-        curr_threshold = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=2032,
-                                                              instance=self.instance)
+        curr_threshold = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=2032, instance=self.instance
+        )
         return curr_threshold
 
     def set_voltage_error_threshold(self, threshold_volts: float) -> None:
@@ -576,9 +645,11 @@ class MeerstetterTEC(object):
         :return: none
         """
         logging.debug(
-            f"set voltage error threshold for channel {self.instance} to {float(threshold_volts)} Volts")
-        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=2033,
-                                             instance=self.instance, value=float(threshold_volts))
+            f"set voltage error threshold for channel {self.instance} to {float(threshold_volts)} Volts"
+        )
+        self.mecom_basic_cmd.set_float_value(
+            address=self.address, parameter_id=2033, instance=self.instance, value=float(threshold_volts)
+        )
 
     def get_voltage_error_threshold(self) -> float:
         """
@@ -588,8 +659,9 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get the voltage error threshold for channel {self.instance}")
-        volt_threshold = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=2033,
-                                                              instance=self.instance)
+        volt_threshold = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=2033, instance=self.instance
+        )
         return volt_threshold
 
     def set_general_operating_mode(self, operating_mode: GeneralOperatingMode) -> None:
@@ -600,9 +672,12 @@ class MeerstetterTEC(object):
         :type operating_mode: GeneralOperatingMode
         :return: None
         """
-        logging.debug(f"set the general operating mode for channel {self.instance} to {operating_mode}")
-        self.mecom_basic_cmd.set_int32_value(address=self.address, parameter_id=2040,
-                                             instance=self.instance, value=operating_mode.value)
+        logging.debug(
+            f"set the general operating mode for channel {self.instance} to {operating_mode}"
+        )
+        self.mecom_basic_cmd.set_int32_value(
+            address=self.address, parameter_id=2040, instance=self.instance, value=operating_mode.value
+        )
 
     def get_general_operating_mode(self) -> GeneralOperatingMode:
         """
@@ -612,8 +687,9 @@ class MeerstetterTEC(object):
         :rtype: GeneralOperatingMode
         """
         logging.debug(f"get the general operating mode for channel {self.instance}")
-        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=2040,
-                                                    instance=self.instance)
+        resp = self.mecom_basic_cmd.get_int32_value(
+            address=self.address, parameter_id=2040, instance=self.instance
+        )
         operating_mode = GeneralOperatingMode(int(resp))
         return operating_mode
 
@@ -625,8 +701,9 @@ class MeerstetterTEC(object):
         :rtype: int
         """
         logging.debug(f"get the UART base baud rate for channel {self.instance}")
-        baud_rate = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=2050,
-                                                         instance=self.instance)
+        baud_rate = self.mecom_basic_cmd.get_int32_value(
+            address=self.address, parameter_id=2050, instance=self.instance
+        )
         return baud_rate
 
     def get_device_address(self) -> int:
@@ -643,8 +720,9 @@ class MeerstetterTEC(object):
         :rtype: int
         """
         logging.debug(f"get the device address for channel {self.instance}")
-        device_address = self.mecom_basic_cmd.get_int32_value(address=0, parameter_id=2051,
-                                                              instance=self.instance)
+        device_address = self.mecom_basic_cmd.get_int32_value(
+            address=0, parameter_id=2051, instance=self.instance
+        )
         return device_address
 
     def get_uart_response_delay(self) -> float:
@@ -655,19 +733,10 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get the UART response delay for channel {self.instance}")
-        delay_us = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=2052,
-                                                        instance=self.instance)
+        delay_us = self.mecom_basic_cmd.get_int32_value(
+            address=self.address, parameter_id=2052, instance=self.instance
+        )
         return delay_us
-
-    def get_firmware_identification_string(self) -> str:
-        """
-        Query the Firmware Identification String of the device.
-
-        :return: The firmware identification string of the device.
-        :rtype: str
-        """
-        identify = self.mecom_basic_cmd.get_ident_string(address=self.address, channel=self.instance)
-        return identify
 
     def set_temperature(self, temp_degc: float) -> None:
         """
@@ -679,8 +748,9 @@ class MeerstetterTEC(object):
         :return: None
         """
         logging.debug(f"set object temperature for channel {self.instance} to {temp_degc} C")
-        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=3000,
-                                             instance=self.instance, value=float(temp_degc))
+        self.mecom_basic_cmd.set_float_value(
+            address=self.address, parameter_id=3000, instance=self.instance, value=float(temp_degc)
+        )
 
     def set_coarse_temperature_ramp(self, temp_ramp_degc_per_sec: float) -> None:
         """
@@ -692,9 +762,11 @@ class MeerstetterTEC(object):
         :return: None
         """
         logging.debug(
-            f"set coarse temperature ramp for channel {self.instance} to {float(temp_ramp_degc_per_sec)} degC/second")
-        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=3003,
-                                             instance=self.instance, value=float(temp_ramp_degc_per_sec))
+            f"set coarse temperature ramp for channel {self.instance} to {float(temp_ramp_degc_per_sec)} degC/second"
+        )
+        self.mecom_basic_cmd.set_float_value(
+            address=self.address, parameter_id=3003, instance=self.instance, value=float(temp_ramp_degc_per_sec)
+        )
 
     def get_coarse_temperature_ramp(self) -> float:
         """
@@ -705,8 +777,9 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get the coarse temperature ramp for channel {self.instance}")
-        temp_ramp = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=3003,
-                                                         instance=self.instance)
+        temp_ramp = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=3003, instance=self.instance
+        )
         return temp_ramp
 
     def set_proportional_gain(self, prop_gain: float) -> None:
@@ -717,9 +790,12 @@ class MeerstetterTEC(object):
         :type prop_gain: float
         :return: None
         """
-        logging.debug(f"set the proportional gain (Kp) for channel {self.instance} to {float(prop_gain)}")
-        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=3010,
-                                             instance=self.instance, value=float(prop_gain))
+        logging.debug(
+            f"set the proportional gain (Kp) for channel {self.instance} to {float(prop_gain)}"
+        )
+        self.mecom_basic_cmd.set_float_value(
+            address=self.address, parameter_id=3010, instance=self.instance, value=float(prop_gain)
+        )
 
     def get_proportional_gain(self) -> float:
         """
@@ -729,8 +805,9 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get the proportional gain (Kp) for channel {self.instance}")
-        proportional_gain = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=3010,
-                                                                 instance=self.instance)
+        proportional_gain = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=3010, instance=self.instance
+        )
         return proportional_gain
 
     def set_integration_time(self, int_time_sec: float) -> None:
@@ -741,9 +818,12 @@ class MeerstetterTEC(object):
         :type int_time_sec: float
         :return: None
         """
-        logging.debug(f"set the integration time (Ti) for channel {self.instance} to {float(int_time_sec)} seconds")
-        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=3011,
-                                             instance=self.instance, value=float(int_time_sec))
+        logging.debug(
+            f"set the integration time (Ti) for channel {self.instance} to {float(int_time_sec)} seconds"
+        )
+        self.mecom_basic_cmd.set_float_value(
+            address=self.address, parameter_id=3011, instance=self.instance, value=float(int_time_sec)
+        )
 
     def get_integration_time(self) -> float:
         """
@@ -753,8 +833,9 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get the integration time (Ti) for channel {self.instance}")
-        integration_time = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=3011,
-                                                                instance=self.instance)
+        integration_time = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=3011, instance=self.instance
+        )
         return integration_time
 
     def set_differential_time(self, diff_time_sec: float) -> None:
@@ -765,9 +846,12 @@ class MeerstetterTEC(object):
         :type diff_time_sec: float
         :return: None
         """
-        logging.debug(f"set the differential time (Td) for channel {self.instance} to {float(diff_time_sec)} seconds")
-        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=3012,
-                                             instance=self.instance, value=float(diff_time_sec))
+        logging.debug(
+            f"set the differential time (Td) for channel {self.instance} to {float(diff_time_sec)} seconds"
+        )
+        self.mecom_basic_cmd.set_float_value(
+            address=self.address, parameter_id=3012, instance=self.instance, value=float(diff_time_sec)
+        )
 
     def get_differential_time(self) -> float:
         """
@@ -777,8 +861,9 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get the differential time (Td) for channel {self.instance}")
-        differential_time = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=3012,
-                                                                 instance=self.instance)
+        differential_time = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=3012, instance=self.instance
+        )
         return differential_time
 
     def set_part_damping(self, part_damping: float) -> None:
@@ -791,8 +876,9 @@ class MeerstetterTEC(object):
         :return: None
         """
         logging.debug(f"set D Part Damping PT1 for channel {self.instance} to {float(part_damping)}")
-        self.mecom_basic_cmd.set_float_value(address=self.address, parameter_id=3013,
-                                             instance=self.instance, value=float(part_damping))
+        self.mecom_basic_cmd.set_float_value(
+            address=self.address, parameter_id=3013, instance=self.instance, value=float(part_damping)
+        )
 
     def get_part_damping(self) -> float:
         """
@@ -803,8 +889,9 @@ class MeerstetterTEC(object):
         :rtype: float
         """
         logging.debug(f"get D Part Damping PT1 for channel {self.instance}")
-        part_damping = self.mecom_basic_cmd.get_float_value(address=self.address, parameter_id=3013,
-                                                            instance=self.instance)
+        part_damping = self.mecom_basic_cmd.get_float_value(
+            address=self.address, parameter_id=3013, instance=self.instance
+        )
         return part_damping
 
     def set_thermal_regulation_mode(self, regulation_mode: ThermalRegulationMode) -> None:
@@ -816,8 +903,9 @@ class MeerstetterTEC(object):
         :return: None
         """
         logging.debug(f"set the thermal regulation mode for channel {self.instance} to {regulation_mode}")
-        self.mecom_basic_cmd.set_int32_value(address=self.address, parameter_id=3020,
-                                             instance=self.instance, value=regulation_mode.value)
+        self.mecom_basic_cmd.set_int32_value(
+            address=self.address, parameter_id=3020, instance=self.instance, value=regulation_mode.value
+        )
 
     def get_thermal_regulation_mode(self) -> ThermalRegulationMode:
         """
@@ -827,8 +915,9 @@ class MeerstetterTEC(object):
         :rtype: ThermalRegulationMode
         """
         logging.debug(f"get the thermal regulation mode for channel {self.instance}")
-        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=3020,
-                                                    instance=self.instance)
+        resp = self.mecom_basic_cmd.get_int32_value(
+            address=self.address, parameter_id=3020, instance=self.instance
+        )
         regulation_mode = ThermalRegulationMode(int(resp))
         return regulation_mode
 
@@ -843,8 +932,9 @@ class MeerstetterTEC(object):
         :return: None
         """
         logging.debug(f"set the positive current is for channel {self.instance} to {positive_current_is}")
-        self.mecom_basic_cmd.set_int32_value(address=self.address, parameter_id=3034,
-                                             instance=self.instance, value=positive_current_is.value)
+        self.mecom_basic_cmd.set_int32_value(
+            address=self.address, parameter_id=3034, instance=self.instance, value=positive_current_is.value
+        )
 
     def get_positive_current_is(self) -> PositiveCurrentIs:
         """
@@ -856,8 +946,9 @@ class MeerstetterTEC(object):
         :rtype: PositiveCurrentIs
         """
         logging.debug(f"get the positive current is for channel {self.instance}")
-        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=3034,
-                                                    instance=self.instance)
+        resp = self.mecom_basic_cmd.get_int32_value(
+            address=self.address, parameter_id=3034, instance=self.instance
+        )
         return PositiveCurrentIs(int(resp))
 
     def set_object_sensor_type(self, sensor_type: ObjectSensorType) -> None:
@@ -869,8 +960,9 @@ class MeerstetterTEC(object):
         :return: None
         """
         logging.debug(f"set the object sensor type for channel {self.instance} to {sensor_type}")
-        self.mecom_basic_cmd.set_int32_value(address=self.address, parameter_id=4034,
-                                             instance=self.instance, value=sensor_type.value)
+        self.mecom_basic_cmd.set_int32_value(
+            address=self.address, parameter_id=4034, instance=self.instance, value=sensor_type.value
+        )
 
     def get_object_sensor_type(self) -> ObjectSensorType:
         """
@@ -881,8 +973,9 @@ class MeerstetterTEC(object):
         :rtype: ObjectSensorType
         """
         logging.debug(f"get the object sensor type for channel {self.instance}")
-        resp = self.mecom_basic_cmd.get_int32_value(address=self.address, parameter_id=4034,
-                                                    instance=self.instance)
+        resp = self.mecom_basic_cmd.get_int32_value(
+            address=self.address, parameter_id=4034, instance=self.instance
+        )
         return ObjectSensorType(int(resp))
 
     def download_lookup_table(self, filepath: str) -> None:
@@ -1013,8 +1106,10 @@ class MeerstetterTEC(object):
                 lut_status: LutStatus = self.get_lookup_table_status()
 
             if runtime >= timeout:
-                raise LutException("Timeout raised while executing the Lookup Table ; "
-                                   "the lookup table took longer than expected to completely execute...")
+                raise LutException(
+                    "Timeout raised while executing the Lookup Table ; "
+                    "the lookup table took longer than expected to completely execute..."
+                )
 
             logging.info(f"The Lookup Table has executed successfully after {round(runtime, 3)} seconds...")
 
@@ -1031,8 +1126,10 @@ class MeerstetterTEC(object):
         finally:
             if self.get_lookup_table_status() == LutStatus.EXECUTING:
                 self.stop_lookup_table()
-                logging.info("Lookup Table was force stopped ; this may be because the "
-                             "routine timed out while the lookup table was still executing...")
+                logging.info(
+                    "Lookup Table was force stopped ; this may be because the "
+                    "routine timed out while the lookup table was still executing..."
+                )
 
             return success
 
@@ -1046,15 +1143,15 @@ class MeerstetterTEC(object):
         """
         value, description = (1, "on") if enable else (0, "off")
         logging.debug(f"set loop for channel {self.instance} to {description}")
-        self.mecom_basic_cmd.set_int32_value(address=self.address, parameter_id=2010,
-                                             instance=self.instance, value=value)
+        self.mecom_basic_cmd.set_int32_value(
+            address=self.address, parameter_id=2010, instance=self.instance, value=value
+        )
 
     def enable(self) -> None:
         """
         Enable or disable control loop.
 
-        :return:
-        :rtype: None
+        :return: None
         """
         self._set_enable(True)
 
@@ -1062,8 +1159,7 @@ class MeerstetterTEC(object):
         """
         Enable or disable control loop.
 
-        :return:
-        :rtype: None
+        :return: None
         """
         self._set_enable(False)
 
@@ -1125,8 +1221,9 @@ class MeerstetterTEC(object):
         if runtime >= timeout:
             raise TimeoutException(f"wait_for_stable_temperature() timed out after {runtime} seconds")
 
-    def set_and_stabilize_tec_temperature(self, temperature: float = 30.0,
-                                          threshold_deg_c: float = 0.1) -> Tuple[float, List[float]]:
+    def set_and_stabilize_tec_temperature(
+            self, temperature: float = 30.0, threshold_deg_c: float = 0.1
+    ) -> Tuple[float, List[float]]:
         """
         Set the TEC temperature and wait for it to stabilize. The temperature is
         considered stable when the measured standard deviation is less than the defined
@@ -1207,10 +1304,14 @@ class MeerstetterTEC(object):
 
 if __name__ == "__main__":
     mc = MeerstetterTEC()
-    mc.connect(port="COM9", instance=1)
+    mc.connect_serial_port(port="COM9", instance=1)
 
     firmware_identification_string = mc.get_firmware_identification_string()
-    print(f"firmware_identification_string : {firmware_identification_string} ; type {type(firmware_identification_string)}")
+    print(
+        f"firmware_identification_string : "
+        f"{firmware_identification_string} ; "
+        f"type {type(firmware_identification_string)}"
+    )
     print("\n", end="")
 
     print(f"device_type : {mc.get_device_type()} ; type {type(mc.get_device_type())}")
@@ -1219,8 +1320,10 @@ if __name__ == "__main__":
     print(f"temperature : {mc.get_temperature()} ; type {type(mc.get_temperature())}")
     print("\n", end="")
 
-    filepath_ = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                             "mecom_tec/lookup_table/csv/LookupTable Sine ramp_0.1_degC_per_sec.csv")
+    filepath_ = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "mecom_tec/lookup_table/csv/LookupTable Sine ramp_0.1_degC_per_sec.csv"
+    )
     mc.download_lookup_table(filepath=filepath_)
     print("\n", end="")
 

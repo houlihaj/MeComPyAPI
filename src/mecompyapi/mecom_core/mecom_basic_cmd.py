@@ -16,7 +16,7 @@ class MeComBasicCmd:
         :param mequery_set: Reference to the communication interface.
         :type mequery_set: MeComQuerySet
         """
-        self.mequery_set = mequery_set
+        self.mequery_set: MeComQuerySet = mequery_set
 
         # self.address = self.get_device_address()
 
@@ -36,12 +36,12 @@ class MeComBasicCmd:
         :return:
         :rtype: int
         """
-        tx_frame = MeComPacket(control="#", address=0)
+        tx_frame: MeComPacket = MeComPacket(control="#", address=0)
         address_str: str = tx_frame.payload
         address: int = int(address_str)
         return address
 
-    def reset_device(self, address: int, channel: int):
+    def reset_device(self, address: int, channel: int) -> None:
         """
         Resets the device.
         Usually the device does answer to this command, because the reset is slightly delayed.
@@ -52,10 +52,11 @@ class MeComBasicCmd:
         :param channel: TEC output channel (i.e. Parameter Instance)
         :type channel: int
         :raises ComCommandException: When the command fails. Check the inner exception for details.
+        :return: None
         """
-        mecom_var_convert = MeComVarConvert()
+        mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
-            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame: MeComPacket = MeComPacket(control="#", address=address)
             tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "RS")
             self.mequery_set.set(tx_frame)
         except Exception as e:
@@ -73,12 +74,12 @@ class MeComBasicCmd:
         :return: Device Identification String. Usually 20 Chars long.
         :rtype: str
         """
-        mecom_var_convert = MeComVarConvert()
+        mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
-            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame: MeComPacket = MeComPacket(control="#", address=address)
             tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "?IF")
             tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, channel)
-            rx_frame = self.mequery_set.query(tx_frame=tx_frame)
+            rx_frame: MeComPacket = self.mequery_set.query(tx_frame=tx_frame)
             return rx_frame.payload
         except Exception as e:
             raise ComCommandException(f"Get Identification String failed: {e}")
@@ -100,18 +101,18 @@ class MeComBasicCmd:
         :return: Returned value.
         :rtype: int
         """
-        mecom_var_convert = MeComVarConvert()
+        mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
-            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame: MeComPacket = MeComPacket(control="#", address=address)
             tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "?VR")
             tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
             tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
-            rx_frame = self.mequery_set.query(tx_frame=tx_frame)
+            rx_frame: MeComPacket = self.mequery_set.query(tx_frame=tx_frame)
             return mecom_var_convert.read_int32(rx_frame.payload)
         except Exception as e:
             raise ComCommandException(f"Get INT32 Value failed: {e}")
 
-    def get_float_value(self, address: int, parameter_id: int, instance: int):
+    def get_float_value(self, address: int, parameter_id: int, instance: int) -> float:
         """
         Returns a float 32Bit value from the device.
 
@@ -123,20 +124,20 @@ class MeComBasicCmd:
         :type instance: int
         :raises ComCommandException: When the command fails. Check the inner exception for details.
         :return: Returned value.
-        :rtype:
+        :rtype: float
         """
-        mecom_var_convert = MeComVarConvert()
+        mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
-            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame: MeComPacket = MeComPacket(control="#", address=address)
             tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "?VR")
             tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
             tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
-            rx_frame = self.mequery_set.query(tx_frame=tx_frame)
+            rx_frame: MeComPacket = self.mequery_set.query(tx_frame=tx_frame)
             return mecom_var_convert.read_float32(rx_frame.payload)
         except Exception as e:
             raise ComCommandException(f"Get FLOAT Value failed: {e}")
 
-    def get_double_value(self, address: int, parameter_id: int, instance: int):
+    def get_double_value(self, address: int, parameter_id: int, instance: int) -> str:
         """
         Returns a double 64Bit value from the device.
 
@@ -148,20 +149,20 @@ class MeComBasicCmd:
         :type instance: int
         :raises ComCommandException: When the command fails. Check the inner exception for details.
         :return: Returned value.
-        :rtype:
+        :rtype: str
         """
-        mecom_var_convert = MeComVarConvert()
+        mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
-            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame: MeComPacket = MeComPacket(control="#", address=address)
             tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "?VR")
             tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
             tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
-            rx_frame = self.mequery_set.query(tx_frame=tx_frame)
+            rx_frame: MeComPacket = self.mequery_set.query(tx_frame=tx_frame)
             return rx_frame.payload
         except Exception as e:
             raise ComCommandException(f"Get DOUBLE Value failed: {e}")
 
-    def get_int64_value(self, address: int, parameter_id: int, instance: int):
+    def get_int64_value(self, address: int, parameter_id: int, instance: int) -> str:
         """
         Returns a signed int 64Bit value from the device.
 
@@ -173,20 +174,20 @@ class MeComBasicCmd:
         :type instance: int
         :raises ComCommandException: When the command fails. Check the inner exception for details.
         :return: Returned value.
-        :rtype:
+        :rtype: str
         """
-        mecom_var_convert = MeComVarConvert()
+        mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
-            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame: MeComPacket = MeComPacket(control="#", address=address)
             tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "?VR")
             tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
             tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
-            rx_frame = self.mequery_set.query(tx_frame=tx_frame)
+            rx_frame: MeComPacket = self.mequery_set.query(tx_frame=tx_frame)
             return rx_frame.payload
         except Exception as e:
             raise ComCommandException(f"Get INT64 Value failed: {e}")
 
-    def set_int32_value(self, address: int, parameter_id: int, instance: int, value: int):
+    def set_int32_value(self, address: int, parameter_id: int, instance: int, value: int) -> MeComPacket:
         """
         Sets a signed int 32Bit value to the device.
 
@@ -200,21 +201,23 @@ class MeComBasicCmd:
         :type value: int
         :raises ComCommandException: When the command fails. Check the inner exception for details.
         """
-        mecom_var_convert = MeComVarConvert()
+        mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
-            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame: MeComPacket = MeComPacket(control="#", address=address)
             tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "VS")
             tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
             tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
             tx_frame.payload = mecom_var_convert.add_int32(tx_frame.payload, value)
-            rx_frame = self.mequery_set.set(tx_frame=tx_frame)
+            rx_frame: MeComPacket = self.mequery_set.set(tx_frame=tx_frame)
             return rx_frame
 
         except Exception as e:
-            raise ComCommandException(f"Set INT32 Value failed: Address: {address}; "
-                                      f"ID: {parameter_id}; Detail: {instance} : {e}")
+            raise ComCommandException(
+                f"Set INT32 Value failed: Address: {address}; "
+                f"ID: {parameter_id}; Detail: {instance} : {e}"
+            )
 
-    def set_int64_value(self, address: int, parameter_id: int, instance: int, value: int):
+    def set_int64_value(self, address: int, parameter_id: int, instance: int, value: int) -> MeComPacket:
         """
         Sets a signed int 64Bit value to the device.
 
@@ -228,21 +231,23 @@ class MeComBasicCmd:
         :type value: int
         :raises ComCommandException: When the command fails. Check the inner exception for details.
         """
-        mecom_var_convert = MeComVarConvert()
+        mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
-            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame: MeComPacket = MeComPacket(control="#", address=address)
             tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "VS")
             tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
             tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
             tx_frame.payload = mecom_var_convert.add_int64(tx_frame.payload, value)
-            rx_frame = self.mequery_set.set(tx_frame=tx_frame)
+            rx_frame: MeComPacket = self.mequery_set.set(tx_frame=tx_frame)
             return rx_frame
 
         except Exception as e:
-            raise ComCommandException(f"Set INT64 Value failed: Address: {address}; "
-                                      f"ID: {parameter_id}; Detail: {instance} : {e}")
+            raise ComCommandException(
+                f"Set INT64 Value failed: Address: {address}; "
+                f"ID: {parameter_id}; Detail: {instance} : {e}"
+            )
 
-    def set_float_value(self, address: int, parameter_id: int, instance: int, value: float):
+    def set_float_value(self, address: int, parameter_id: int, instance: int, value: float) -> MeComPacket:
         """
         Sets a float 32Bit value to the device.
 
@@ -256,21 +261,23 @@ class MeComBasicCmd:
         :type value: float
         :raises ComCommandException: When the command fails. Check the inner exception for details.
         """
-        mecom_var_convert = MeComVarConvert()
+        mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
-            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame: MeComPacket = MeComPacket(control="#", address=address)
             tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "VS")
             tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
             tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
             tx_frame.payload = mecom_var_convert.add_float32(tx_frame.payload, value)
-            rx_frame = self.mequery_set.set(tx_frame=tx_frame)
+            rx_frame: MeComPacket = self.mequery_set.set(tx_frame=tx_frame)
             return rx_frame
 
         except Exception as e:
-            raise ComCommandException(f"Set FLOAT32 Value failed: Address: {address}; "
-                                      f"ID: {parameter_id}; Detail: {instance} : {e}")
+            raise ComCommandException(
+                f"Set FLOAT32 Value failed: Address: {address}; "
+                f"ID: {parameter_id}; Detail: {instance} : {e}"
+            )
 
-    def set_double_value(self, address: int, parameter_id: int, instance: int, value: int):
+    def set_double_value(self, address: int, parameter_id: int, instance: int, value: int) -> MeComPacket:
         """
         Sets a double 64Bit value to the device.
 
@@ -284,21 +291,25 @@ class MeComBasicCmd:
         :type value: int
         :raises ComCommandException: When the command fails. Check the inner exception for details.
         """
-        mecom_var_convert = MeComVarConvert()
+        mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
-            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame: MeComPacket = MeComPacket(control="#", address=address)
             tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "VS")
             tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
             tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
             tx_frame.payload = mecom_var_convert.add_double64(tx_frame.payload, value)
-            rx_frame = self.mequery_set.set(tx_frame=tx_frame)
+            rx_frame: MeComPacket = self.mequery_set.set(tx_frame=tx_frame)
             return rx_frame
 
         except Exception as e:
-            raise ComCommandException(f"Set DOUBLE64 Value failed: Address: {address}; "
-                                      f"ID: {parameter_id}; Detail: {instance} : {e}")
+            raise ComCommandException(
+                f"Set DOUBLE64 Value failed: Address: {address}; "
+                f"ID: {parameter_id}; Detail: {instance} : {e}"
+            )
 
-    def set_device_address(self, address: int, device_type: int, serial_number: str, set_address: int, option: int):
+    def set_device_address(
+            self, address: int, device_type: int, serial_number: str, set_address: int, option: int
+    ):
         """
         Sets a signed int 64Bit value to the device.
 
@@ -316,7 +327,9 @@ class MeComBasicCmd:
         """
         raise NotImplementedError
 
-    def get_limits(self, address: int, parameter_id: int, instance: int, min_: float, max_: float):
+    def get_limits(
+            self, address: int, parameter_id: int, instance: int, min_: float, max_: float
+    ):
         """
         Returns the basic Meta data to the parameter.
 
@@ -338,26 +351,28 @@ class MeComBasicCmd:
 
 
 if __name__ == "__main__":
-    phy_com = MeComPhySerialPort()
+    phy_com: MeComPhySerialPort = MeComPhySerialPort()
     phy_com.connect(port_name="COM9")
 
-    mequery_set_ = MeComQuerySet(phy_com=phy_com)
+    mequery_set_: MeComQuerySet = MeComQuerySet(phy_com=phy_com)
 
-    mecom_basic_cmd = MeComBasicCmd(mequery_set=mequery_set_)
+    mecom_basic_cmd: MeComBasicCmd = MeComBasicCmd(mequery_set=mequery_set_)
 
-    identify = mecom_basic_cmd.get_ident_string(address=2, channel=1)
+    identify: str = mecom_basic_cmd.get_ident_string(address=2, channel=1)
     print(f"identify : {identify}")
     print(f"type(identify) : {type(identify)}")
     print("\n", end="")
 
-    device_type_ = mecom_basic_cmd.get_int32_value(address=2, parameter_id=100,
-                                                   instance=1)  # parameter_name : "Device Type"
+    device_type_: int = mecom_basic_cmd.get_int32_value(
+        address=2, parameter_id=100, instance=1
+    )  # parameter_name : "Device Type"
     print(f"device_type : {device_type_}")
     print(f"type(device_type) : {type(device_type_)}")
     print("\n", end="")
 
-    object_temperature = mecom_basic_cmd.get_float_value(address=2, parameter_id=1000,
-                                                         instance=1)  # parameter_name : "Object Temperature"
+    object_temperature: float = mecom_basic_cmd.get_float_value(
+        address=2, parameter_id=1000, instance=1
+    )  # parameter_name : "Object Temperature"
     print(f"object_temperature : {object_temperature}")
     print(f"type(object_temperature) : {type(object_temperature)}")
     print("\n", end="")
