@@ -57,7 +57,7 @@ class MeComBasicCmd:
         mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
             tx_frame: MeComPacket = MeComPacket(control="#", address=address)
-            tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "RS")
+            tx_frame.payload = mecom_var_convert.add_string(stream=tx_frame.payload, value="RS")
             self.mequery_set.set(tx_frame)
         except Exception as e:
             raise ComCommandException(f"Reset Device failed: {e}")
@@ -77,8 +77,8 @@ class MeComBasicCmd:
         mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
             tx_frame: MeComPacket = MeComPacket(control="#", address=address)
-            tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "?IF")
-            tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, channel)
+            tx_frame.payload = mecom_var_convert.add_string(stream=tx_frame.payload, value="?IF")
+            tx_frame.payload = mecom_var_convert.add_uint8(stream=tx_frame.payload, value=channel)
             rx_frame: MeComPacket = self.mequery_set.query(tx_frame=tx_frame)
             return rx_frame.payload
         except Exception as e:
@@ -104,9 +104,9 @@ class MeComBasicCmd:
         mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
             tx_frame: MeComPacket = MeComPacket(control="#", address=address)
-            tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "?VR")
-            tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
-            tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
+            tx_frame.payload = mecom_var_convert.add_string(stream=tx_frame.payload, value="?VR")
+            tx_frame.payload = mecom_var_convert.add_uint16(stream=tx_frame.payload, value=parameter_id)
+            tx_frame.payload = mecom_var_convert.add_uint8(stream=tx_frame.payload, value=instance)
             rx_frame: MeComPacket = self.mequery_set.query(tx_frame=tx_frame)
             return mecom_var_convert.read_int32(rx_frame.payload)
         except Exception as e:
@@ -129,9 +129,9 @@ class MeComBasicCmd:
         mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
             tx_frame: MeComPacket = MeComPacket(control="#", address=address)
-            tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "?VR")
-            tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
-            tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
+            tx_frame.payload = mecom_var_convert.add_string(stream=tx_frame.payload, value="?VR")
+            tx_frame.payload = mecom_var_convert.add_uint16(stream=tx_frame.payload, value=parameter_id)
+            tx_frame.payload = mecom_var_convert.add_uint8(stream=tx_frame.payload, value=instance)
             rx_frame: MeComPacket = self.mequery_set.query(tx_frame=tx_frame)
             return mecom_var_convert.read_float32(rx_frame.payload)
         except Exception as e:
@@ -154,9 +154,9 @@ class MeComBasicCmd:
         mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
             tx_frame: MeComPacket = MeComPacket(control="#", address=address)
-            tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "?VR")
-            tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
-            tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
+            tx_frame.payload = mecom_var_convert.add_string(stream=tx_frame.payload, value="?VR")
+            tx_frame.payload = mecom_var_convert.add_uint16(stream=tx_frame.payload, value=parameter_id)
+            tx_frame.payload = mecom_var_convert.add_uint8(stream=tx_frame.payload, value=instance)
             rx_frame: MeComPacket = self.mequery_set.query(tx_frame=tx_frame)
             return rx_frame.payload
         except Exception as e:
@@ -179,9 +179,9 @@ class MeComBasicCmd:
         mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
             tx_frame: MeComPacket = MeComPacket(control="#", address=address)
-            tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "?VR")
-            tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
-            tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
+            tx_frame.payload = mecom_var_convert.add_string(stream=tx_frame.payload, value="?VR")
+            tx_frame.payload = mecom_var_convert.add_uint16(stream=tx_frame.payload, value=parameter_id)
+            tx_frame.payload = mecom_var_convert.add_uint8(stream=tx_frame.payload, value=instance)
             rx_frame: MeComPacket = self.mequery_set.query(tx_frame=tx_frame)
             return rx_frame.payload
         except Exception as e:
@@ -204,10 +204,10 @@ class MeComBasicCmd:
         mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
             tx_frame: MeComPacket = MeComPacket(control="#", address=address)
-            tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "VS")
-            tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
-            tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
-            tx_frame.payload = mecom_var_convert.add_int32(tx_frame.payload, value)
+            tx_frame.payload = mecom_var_convert.add_string(stream=tx_frame.payload, value="VS")
+            tx_frame.payload = mecom_var_convert.add_uint16(stream=tx_frame.payload, value=parameter_id)
+            tx_frame.payload = mecom_var_convert.add_uint8(stream=tx_frame.payload, value=instance)
+            tx_frame.payload = mecom_var_convert.add_int32(stream=tx_frame.payload, value=value)
             rx_frame: MeComPacket = self.mequery_set.set(tx_frame=tx_frame)
             return rx_frame
 
@@ -234,10 +234,10 @@ class MeComBasicCmd:
         mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
             tx_frame: MeComPacket = MeComPacket(control="#", address=address)
-            tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "VS")
-            tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
-            tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
-            tx_frame.payload = mecom_var_convert.add_int64(tx_frame.payload, value)
+            tx_frame.payload = mecom_var_convert.add_string(stream=tx_frame.payload, value="VS")
+            tx_frame.payload = mecom_var_convert.add_uint16(stream=tx_frame.payload, value=parameter_id)
+            tx_frame.payload = mecom_var_convert.add_uint8(stream=tx_frame.payload, value=instance)
+            tx_frame.payload = mecom_var_convert.add_int64(stream=tx_frame.payload, value=value)
             rx_frame: MeComPacket = self.mequery_set.set(tx_frame=tx_frame)
             return rx_frame
 
@@ -264,10 +264,10 @@ class MeComBasicCmd:
         mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
             tx_frame: MeComPacket = MeComPacket(control="#", address=address)
-            tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "VS")
-            tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
-            tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
-            tx_frame.payload = mecom_var_convert.add_float32(tx_frame.payload, value)
+            tx_frame.payload = mecom_var_convert.add_string(stream=tx_frame.payload, value="VS")
+            tx_frame.payload = mecom_var_convert.add_uint16(stream=tx_frame.payload, value=parameter_id)
+            tx_frame.payload = mecom_var_convert.add_uint8(stream=tx_frame.payload, value=instance)
+            tx_frame.payload = mecom_var_convert.add_float32(stream=tx_frame.payload, value=value)
             rx_frame: MeComPacket = self.mequery_set.set(tx_frame=tx_frame)
             return rx_frame
 
@@ -277,7 +277,9 @@ class MeComBasicCmd:
                 f"ID: {parameter_id}; Detail: {instance} : {e}"
             )
 
-    def set_double_value(self, address: int, parameter_id: int, instance: int, value: int) -> MeComPacket:
+    def set_double_value(
+            self, address: int, parameter_id: int, instance: int, value: int
+    ) -> MeComPacket:
         """
         Sets a double 64Bit value to the device.
 
@@ -294,10 +296,10 @@ class MeComBasicCmd:
         mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
             tx_frame: MeComPacket = MeComPacket(control="#", address=address)
-            tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "VS")
-            tx_frame.payload = mecom_var_convert.add_uint16(tx_frame.payload, parameter_id)
-            tx_frame.payload = mecom_var_convert.add_uint8(tx_frame.payload, instance)
-            tx_frame.payload = mecom_var_convert.add_double64(tx_frame.payload, value)
+            tx_frame.payload = mecom_var_convert.add_string(stream=tx_frame.payload, value="VS")
+            tx_frame.payload = mecom_var_convert.add_uint16(stream=tx_frame.payload, value=parameter_id)
+            tx_frame.payload = mecom_var_convert.add_uint8(stream=tx_frame.payload, value=instance)
+            tx_frame.payload = mecom_var_convert.add_double64(stream=tx_frame.payload, value=value)
             rx_frame: MeComPacket = self.mequery_set.set(tx_frame=tx_frame)
             return rx_frame
 

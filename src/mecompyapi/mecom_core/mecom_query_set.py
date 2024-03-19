@@ -67,7 +67,7 @@ class MeComQuerySet:
         :type phy_com: IntMeComPhy
         """
         self.phy_com = phy_com
-        self.me_frame = MeComFrame(int_phy_com=phy_com)
+        self.me_frame: MeComFrame = MeComFrame(int_phy_com=phy_com)
         self.sequence_number: int = random.randrange(0, 65_535, 1)
 
         self.is_ready: bool = False
