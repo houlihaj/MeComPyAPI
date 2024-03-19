@@ -24,7 +24,7 @@ if __name__ == '__main__':
     mc = MeerstetterTEC()
 
     try:
-        mc.connect(port="COM13")
+        mc.connect_serial_port(port="COM13")
 
         if mc.get_lookup_table_status() == LutStatus.EXECUTING:
             mc.stop_lookup_table()

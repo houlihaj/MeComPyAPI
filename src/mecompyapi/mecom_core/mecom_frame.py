@@ -126,7 +126,7 @@ class MeComFrame:
 
         tx_stream += tx_frame.payload
 
-        self.last_crc = self._calc_crc_citt(frame=tx_stream.encode())
+        self.last_crc: int = self._calc_crc_citt(frame=tx_stream.encode())
 
         tx_stream = mecom_var_convert.add_uint16(stream=tx_stream, value=self.last_crc)
 
@@ -142,7 +142,7 @@ class MeComFrame:
         :return: Received data.
         :rtype: MeComPacket
         """
-        rx_frame = MeComPacket()
+        rx_frame: MeComPacket = MeComPacket()
         rx_frame.receive_type = ERcvType.EMPTY
 
         rx_stream: str = self.phy_com.get_data_or_timeout()
@@ -151,7 +151,9 @@ class MeComFrame:
 
         return rx_frame
 
-    def _decode_frame(self, rx_frame: MeComPacket, rx_stream: str, local_rx_buf: Optional = None) -> MeComPacket:
+    def _decode_frame(
+            self, rx_frame: MeComPacket, rx_stream: str, local_rx_buf: Optional = None
+    ) -> MeComPacket:
         """
 
         :param rx_frame:
