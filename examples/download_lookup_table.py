@@ -21,7 +21,7 @@ if __name__ == '__main__':
     # initialize controller
     mc = MeerstetterTEC()
 
-    mc.connect(port="COM13")
+    mc.connect_serial_port(port="COM13")
 
     identity = mc.get_id()
     print("identity: {}".format(identity))

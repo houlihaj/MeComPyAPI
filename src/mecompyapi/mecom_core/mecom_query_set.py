@@ -68,31 +68,31 @@ class MeComQuerySet:
         """
         self.phy_com = phy_com
         self.me_frame = MeComFrame(int_phy_com=phy_com)
-        self.sequence_number = random.randrange(0, 65_535, 1)
-        
-        self.is_ready = False
-        self.version_is_okay = False
-        self.default_device_address = 1
+        self.sequence_number: int = random.randrange(0, 65_535, 1)
 
-    def get_is_ready(self):
+        self.is_ready: bool = False
+        self.version_is_okay: bool = False
+        self.default_device_address: int = 1
+
+    def get_is_ready(self) -> bool:
         """
-        true when the interface is ready to use; false if not.
-        
-        Is automatically set to false if an interface error or timeout error occurs. 
+        True when the interface is ready to use; false if not.
+
+        Is automatically set to false if an interface error or timeout error occurs.
         Must be set from application level with set_is_ready() function.
-        
+
         :return:
         :rtype: bool
         """
         return self.is_ready
-    
+
     def set_is_ready(self, is_ready: bool) -> None:
         """
         Used from application level to inform other threads that the interface is ready.
-        
+
         Usually the application device connector searches for a valid device
         and sets then the interface as ready.
-        
+
         :param is_ready:
         :type is_ready: bool
         :raises NotSupportedException: Thrown when another thread than the creator of
@@ -101,16 +101,19 @@ class MeComQuerySet:
         """
         self.is_ready = is_ready
 
-    def get_version_is_okay(self):
+    def get_version_is_okay(self) -> bool:
         """
-        true when the application connector has recognized a valid device firmware version;
-        
-        Is automatically set to false if an interface error or timeout error occurs. 
+        True when the application connector has recognized a valid device firmware version;
+
+        Is automatically set to false if an interface error or timeout error occurs.
         Must be set from application level with SetVersionIsOK() function.
+
+        :return:
+        :rtype: bool
         """
         return self._version_is_okay()
 
-    def set_version_is_okay(self, version_is_okay: bool):
+    def set_version_is_okay(self, version_is_okay: bool) -> None:
         """
         Used from application level to inform other threads that the interface
         is connected to a device with a valid firmware version.
@@ -119,28 +122,35 @@ class MeComQuerySet:
         :type version_is_okay: bool
         :raises NotSupportedException: Thrown when another thread than the creator
             of this instance tries to set version OK.
+        :return: None
         """
         self.version_is_okay = version_is_okay
 
-    def _version_is_okay(self):
+    def _version_is_okay(self) -> bool:
         """
         true when the application connector has recognized a valid device firmware version;
-        
-        Is automatically set to false if an interface error or timeout error occurs. 
+
+        Is automatically set to false if an interface error or timeout error occurs.
         Must be set from application level with SetVersionIsOK() function.
+
+        :return:
+        :rtype: bool
         """
         return self.version_is_okay
 
-    def get_default_device_address(self):
+    def get_default_device_address(self) -> int:
         """
         Represents the default destination address for the device to be addressed.
         This value is used if null is passed for the device address in a package.
 
         To set this value use the function SetDefaultDeviceAddress().
+
+        :return:
+        :rtype: int
         """
         return self._default_device_address()
 
-    def set_default_device_address(self, address):
+    def set_default_device_address(self, address) -> None:
         """
         Sets the default destination address for the device to be addressed.
         This value is used if null is passed for the device address in a package.
@@ -152,15 +162,19 @@ class MeComQuerySet:
         :type address:
         :raises NotSupportedException: Thrown when another thread than the creator
             of this instance tries to set.
+        :return: None
         """
         self.default_device_address = address
 
-    def _default_device_address(self):
+    def _default_device_address(self) -> int:
         """
         Represents the default destination address for the device to be addressed.
         This value is used if null is passed for the device address in a package.
 
         To set this value use the function SetDefaultDeviceAddress().
+
+        :return:
+        :rtype: int
         """
         return self.default_device_address
 
@@ -175,10 +189,13 @@ class MeComQuerySet:
         """
         raise NotImplementedError
 
-    def check_if_connected(self):
+    def check_if_connected(self) -> bool:
         """
         If the interface is not ready and the current thread is
         not the creator of this instance, throw exception
+
+        :return:
+        :rtype: bool
         """
         return True
 
@@ -202,11 +219,12 @@ class MeComQuerySet:
             self.check_if_connected()
 
             try:
-                return self.local_query(tx_frame=tx_frame)
+                rx_frame: MeComPacket = self.local_query(tx_frame=tx_frame)
+                return rx_frame
             except ServerException as e:
                 raise e
             except GeneralException as e:
-                self.is_ready = False
+                self.is_ready: bool = False
                 raise e
 
         except NotConnectedException as e:
@@ -233,13 +251,14 @@ class MeComQuerySet:
             self.check_if_connected()
 
             try:
-                return self.local_set(tx_frame=tx_frame)
+                rx_frame: MeComPacket = self.local_set(tx_frame=tx_frame)
+                return rx_frame
 
             except ServerException as e:
                 raise e
 
             except GeneralException as e:
-                self.is_ready = False
+                self.is_ready: bool = False
                 raise e
 
         except NotConnectedException as e:
@@ -257,8 +276,8 @@ class MeComQuerySet:
             tx_frame.address = self.get_default_device_address()
 
         self.sequence_number += 1
-        trials_left = 3
-        rx_frame = MeComPacket()
+        trials_left: int = 3
+        rx_frame: MeComPacket = MeComPacket()
 
         while trials_left > 0:
             trials_left -= 1
@@ -268,7 +287,7 @@ class MeComQuerySet:
                 self.me_frame.send_frame(tx_frame=tx_frame)
                 if tx_frame.address == 255:
                     return rx_frame  # on the address 255, no answer is expected
-                rx_frame = self.me_frame.receive_frame_or_timeout()
+                rx_frame: MeComPacket = self.me_frame.receive_frame_or_timeout()
                 # if rx_frame.receive_type == ERcvType.DATA and rx_frame.sequence_number and rx_frame.address == tx_frame.address:
                 #     # Corresponding Frame received
                 #     if rx_frame.payload.read_byte() == "+":
@@ -292,7 +311,8 @@ class MeComQuerySet:
         # Communication failed, check last error
         if rx_frame.receive_type != ERcvType.DATA:
             raise GeneralException(
-                f"Query failed : Wrong Type of package received. Received {rx_frame.receive_type} ; Expected {ERcvType.DATA}"
+                f"Query failed : Wrong Type of package received. "
+                f"Received {rx_frame.receive_type} ; Expected {ERcvType.DATA}"
             )
         if rx_frame.sequence_number != self.sequence_number:
             raise GeneralException(
@@ -301,7 +321,8 @@ class MeComQuerySet:
             )
         if rx_frame.address != tx_frame.address:
             raise GeneralException(
-                f"Query failed : Wrong Address received. Received {rx_frame.address} ; Expected {tx_frame.address}"
+                f"Query failed : Wrong Address received. "
+                f"Received {rx_frame.address} ; Expected {tx_frame.address}"
             )
 
         raise GeneralException("Query failed : Unknown error")
@@ -314,8 +335,8 @@ class MeComQuerySet:
             tx_frame.address = self.get_default_device_address()
 
         self.sequence_number += 1
-        trials_left = 3
-        rx_frame = MeComPacket()
+        trials_left: int = 3
+        rx_frame: MeComPacket = MeComPacket()
 
         while trials_left > 0:
             trials_left -= 1
@@ -325,7 +346,7 @@ class MeComQuerySet:
                 self.me_frame.send_frame(tx_frame)
                 if tx_frame.address == 255:
                     return rx_frame  # on the address 255, no answer is expected
-                rx_frame = self.me_frame.receive_frame_or_timeout()
+                rx_frame: MeComPacket = self.me_frame.receive_frame_or_timeout()
                 # if rx_frame.sequence_number == self.sequence_number and rx_frame.address == tx_frame.address:
                 #     # Corresponding Frame received
                 #     if rx_frame.receive_type == ERcvType.DATA:
@@ -358,7 +379,8 @@ class MeComQuerySet:
 
         if rx_frame.address != tx_frame.address:
             raise GeneralException(
-                f"Set failed: Wrong Address received. Received {rx_frame.address} ; Expected {tx_frame.address}"
+                f"Set failed: Wrong Address received. "
+                f"Received {rx_frame.address} ; Expected {tx_frame.address}"
             )
 
         raise GeneralException("Set failed: Unknown error")

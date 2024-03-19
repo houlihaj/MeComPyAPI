@@ -5,15 +5,6 @@ from mecompyapi.phy_wrapper.int_mecom_phy import (
 )
 
 
-class InstrumentException(Exception):
-    def __init__(self, message):
-        super().__init__(message)
-
-
-class InstrumentConnectionError(InstrumentException):
-    pass
-
-
 class ResponseException(Exception):
     def __init__(self, message):
         super().__init__(message)
@@ -48,7 +39,7 @@ class MeComPhySerialPort(IntMeComPhy):
         """
         raise NotImplementedError
 
-    def connect(self, port_name: str, timeout: int = 1, baudrate: int = 57600):
+    def connect(self, port_name: str, timeout: int = 1, baudrate: int = 57600) -> None:
         """
         Connects to a serial port. On Windows, these are typically 'COMX' where X is the number of the port. In Linux,
         they are often /dev/ttyXXXY where XXX usually indicates if it is a serial or USB port, and Y indicates the
@@ -61,7 +52,8 @@ class MeComPhySerialPort(IntMeComPhy):
         :param baudrate: The baud rate setting.
         :type baudrate: int
         :raises SerialException:
-        :raises InstrumentConnectionError:
+        :raises MeComPhyInterfaceException:
+        :return: None
         """
         self.ser.port = port_name
         self.ser.timeout = timeout
@@ -73,39 +65,45 @@ class MeComPhySerialPort(IntMeComPhy):
             except SerialException as e:
                 raise e
         else:
-            raise InstrumentConnectionError("Serial device is already open!")
+            raise MeComPhyInterfaceException("Serial device is already open!")
 
-    def tear(self):
+    def tear(self) -> None:
         """
         Tear should always be called when the instrument is being disconnected. It should
         also be called when the program is ending.
+
+        :return: None
         """
         self.ser.flush()
         self.ser.close()
 
-    def _read(self, size):
+    def _read(self, size) -> bytes:
         """
         Read n=size bytes from serial, if <n bytes are received (serial.read() return because of timeout),
         raise a timeout.
+
+        :return:
+        :rtype: bytes
         """
-        recv = self.ser.read(size=size)
+        recv: bytes = self.ser.read(size=size)
         if len(recv) < size:
             raise ResponseTimeout("timeout because serial read returned less bytes than expected")
         else:
             return recv
 
-    def send_string(self, stream: str):
+    def send_string(self, stream: str) -> None:
         """
         Sends data to the physical interface.
 
         :param stream: The whole content of the Stream is sent to the physical interface.
         :type stream: str
+        :return: None
         """
         # clear buffers
         self.ser.reset_output_buffer()
         self.ser.reset_input_buffer()
 
-        stream_bytes = stream.encode()
+        stream_bytes: bytes = stream.encode()
 
         # send query
         self.ser.write(stream_bytes)
@@ -131,14 +129,14 @@ class MeComPhySerialPort(IntMeComPhy):
         """
         try:
             # initialize response and carriage return
-            cr = "\r".encode()
-            response_frame = b''
-            response_byte = self._read(size=1)  # read one byte at a time, timeout is set on instance level
+            cr: bytes = "\r".encode()
+            response_frame: bytes = b''
+            response_byte: bytes = self._read(size=1)  # read one byte at a time, timeout is set on instance level
 
             # read until stop byte
             while response_byte != cr:
                 response_frame += response_byte
-                response_byte = self._read(size=1)
+                response_byte: bytes = self._read(size=1)
 
             return response_frame.decode()
 

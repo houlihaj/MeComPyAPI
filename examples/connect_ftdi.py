@@ -1,6 +1,4 @@
-import time
 import logging
-import ftd2xx
 from mecompyapi.tec1090series import MeerstetterTEC
 
 

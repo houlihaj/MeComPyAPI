@@ -1,4 +1,3 @@
-import time
 import logging
 from mecompyapi.tec1090series import MeerstetterTEC
 
