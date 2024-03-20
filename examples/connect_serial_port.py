@@ -12,7 +12,6 @@ if __name__ == '__main__':
     mc.connect_serial_port(port="COM9")
 
     identity = mc.get_id()
-    print(f"identity: {identity}")
-    print("\n", end="")
+    logging.info(f"identity: {identity}")
 
     mc.tear()

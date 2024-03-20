@@ -11,8 +11,12 @@ if __name__ == '__main__':
 
     mc.connect_ftdi(id_str="DK0E1IDC")
 
+    fw_id_string = (
+        mc.get_firmware_identification_string()
+    )  # response is always 20 char long; padded with spaces if needed
+    logging.info(f"FW Identification String : {fw_id_string}\n")
+
     identity = mc.get_id()
-    print(f"identity: {identity}")
-    print("\n", end="")
+    logging.info(f"identity: {identity}")
 
     mc.tear()

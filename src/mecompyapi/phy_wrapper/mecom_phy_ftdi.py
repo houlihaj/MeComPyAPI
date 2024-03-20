@@ -59,8 +59,6 @@ class MeComPhyFtdi(IntMeComPhy):
         :type baudrate: int
         :param timeout: Time in seconds for read timeout. If timeout happens, read returns empty string.
         :type timeout: int
-        :raises SerialException:
-        :raises InstrumentConnectionError:
         :return: None
         """
         if id_str is not None:

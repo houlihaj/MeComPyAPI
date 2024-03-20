@@ -4,7 +4,7 @@ import time
 import datetime
 import statistics
 from enum import Enum
-from typing import Tuple, List, Optional, Union
+from typing import Tuple, List, Optional
 
 from mecompyapi.mecom_core.mecom_query_set import MeComQuerySet
 from mecompyapi.mecom_core.mecom_basic_cmd import MeComBasicCmd
@@ -126,7 +126,7 @@ class MeerstetterTEC(object):
         self.address: Optional[int] = None
         self.instance: Optional[int] = None
 
-    def connect_serial_port(self, port: str = "COM9", instance: int = 1):
+    def connect_serial_port(self, port: str = "COM9", instance: int = 1) -> None:
         """
         Connects to a serial port. On Windows, these are typically 'COMX' where X
         is the number of the port. In Linux, they are often /dev/ttyXXXY where XXX
@@ -171,29 +171,30 @@ class MeerstetterTEC(object):
             f"Could not successfully query the controller address after {retries} retries..."
         )
 
-    def connect_ftdi(self, id_str: str = "DK0E1IDC", instance: int = 1):
+    def connect_ftdi(self, id_str: Optional[str] = None, instance: int = 1) -> None:
         """
         Connect to the controller using the FTDI chip drivers.
 
         :param id_str:
-        :type id_str: str
+        :type id_str: Optional[str]
         :param instance:
         :type instance: int
+        :raises ComCommandException:
         :return: None
         """
         self.instance: int = instance
 
-        self.phy_com = MeComPhyFtdi()
+        self.phy_com: MeComPhyFtdi = MeComPhyFtdi()
 
         self.phy_com.connect(id_str=id_str)
-        mequery_set = MeComQuerySet(phy_com=self.phy_com)
-        self.mecom_basic_cmd = MeComBasicCmd(mequery_set=mequery_set)
-        self.mecom_lut_cmd = LutCmd(mecom_query_set=mequery_set)
+        mequery_set: MeComQuerySet = MeComQuerySet(phy_com=self.phy_com)
+        self.mecom_basic_cmd: MeComBasicCmd = MeComBasicCmd(mequery_set=mequery_set)
+        self.mecom_lut_cmd: LutCmd = LutCmd(mecom_query_set=mequery_set)
 
-        retries = 3
+        retries: int = 3
         for _ in range(retries):
             try:
-                self.address = self.get_device_address()
+                self.address: int = self.get_device_address()
                 logging.debug(f"connected to {self.address}")
                 return
             except ComCommandException as e:
