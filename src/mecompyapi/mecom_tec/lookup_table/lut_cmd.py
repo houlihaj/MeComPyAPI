@@ -75,7 +75,7 @@ class LutCmd(object):
             tx_frame = MeComPacket(control="#", address=address)
             tx_frame.payload = mecom_var_convert.add_string(tx_frame.payload, "?LT")
             tx_frame.payload = (
-                mecom_var_convert.add_uint4(tx_frame.payload, 2)
+                mecom_var_convert.add_uint4(tx_frame.payload, value=2)
             )  # 0 = Status Query, 1 = Program, 2 = Do Analyze
             rx_frame = self.mequery_set.query(tx_frame=tx_frame)
 
@@ -104,10 +104,10 @@ class LutCmd(object):
         try:
             tx_frame = MeComPacket(control="#", address=address)
             tx_frame.payload = (
-                mecom_var_convert.add_string(tx_frame.payload, "?LT")
+                mecom_var_convert.add_string(tx_frame.payload, value="?LT")
             )  # Start payload with Lookup Table command, '?LT' is used for write and read
             tx_frame.payload = (
-                mecom_var_convert.add_uint4(tx_frame.payload, 0)
+                mecom_var_convert.add_uint4(tx_frame.payload, value=0)
             )  # 0 = Status Query, 1 = Program, 2 = Do Analyze
 
             rx_frame = self.mequery_set.set(tx_frame=tx_frame)
@@ -188,7 +188,9 @@ class LutCmd(object):
         :type table_id: int
         :return: None
         """
-        self.mecom_basic_cmd.set_int32_value(address=address, parameter_id=52010, instance=instance, value=table_id)
+        self.mecom_basic_cmd.set_int32_value(
+            address=address, parameter_id=52010, instance=instance, value=table_id
+        )
 
     def set_number_of_repetitions(self, address: int, instance: int, nr_of_repetitions: int) -> None:
         """
@@ -205,8 +207,9 @@ class LutCmd(object):
         :return: None
         """
         if 0 <= nr_of_repetitions <= 100_000:
-            self.mecom_basic_cmd.set_int32_value(address=address, parameter_id=52012, instance=instance,
-                                                 value=nr_of_repetitions)
+            self.mecom_basic_cmd.set_int32_value(
+                address=address, parameter_id=52012, instance=instance, value=nr_of_repetitions
+            )
         else:
             raise LutException("NrOfRepetitions value range is 0 ... 100_000!")
 
@@ -223,9 +226,9 @@ class LutCmd(object):
         :type page_offset: int
         :return: None
         """
-        mecom_var_convert = MeComVarConvert()
+        mecom_var_convert: MeComVarConvert = MeComVarConvert()
         try:
-            tx_frame = MeComPacket(control="#", address=address)
+            tx_frame: MeComPacket = MeComPacket(control="#", address=address)
             tx_frame.payload = (
                 mecom_var_convert.add_string(tx_frame.payload, "?LT")
             )  # Start payload with Lookup Table command, '?LT' is used for write and read
@@ -235,7 +238,7 @@ class LutCmd(object):
             tx_frame.payload = mecom_var_convert.add_uint32(tx_frame.payload, page_offset)  # Lookup Table Page Offset
 
             # Add bytearray generated from List[LutRecord]
-            count = len(list_lut_record)
+            count: int = len(list_lut_record)
             lut_record_bytearray = bytearray(b"")
             for i in range(count):
                 lut_record_bytearray.extend(list_lut_record[i].get_bytes())
@@ -251,8 +254,8 @@ class LutCmd(object):
 
             timeout: int = 0
             while True:
-                rx_frame = self.mequery_set.set(tx_frame=tx_frame)
-                status = mecom_var_convert.read_uint4(rx_frame.payload)
+                rx_frame: MeComPacket = self.mequery_set.set(tx_frame=tx_frame)
+                status: int = mecom_var_convert.read_uint4(rx_frame.payload)
                 logging.info(f"?LT Program Server Response : {LutServerResponse(status)}")
 
                 if status != LUT_FLASH_STATUS_DATA_ACCEPTED:
@@ -279,7 +282,7 @@ class LutCmd(object):
         timeout: int = 0
         while True:
             # Send LUT analyze query
-            successfully_started = self.start_analyze_lut(address=address)
+            successfully_started: bool = self.start_analyze_lut(address=address)
             logging.info(f"successfully_started : {successfully_started}")
             if successfully_started is not True:
                 timeout += 1
@@ -301,7 +304,7 @@ class LutCmd(object):
         for record in records:  # All Records without the EOF Record
             if record.instruction != LUT_EOF_INSTR:
                 # Calculate the CRC over all records
-                old_crc = self._calc_crc(crc=old_crc, record=record)
+                old_crc: int = self._calc_crc(crc=old_crc, record=record)
             else:
                 # Add the CRC to the last record (EOF record) as Field2 attribute
                 record.field2_int = int(old_crc)
@@ -320,10 +323,10 @@ class LutCmd(object):
         split_record: List[int] = record.get_int_array()
 
         # First calculate the CRC with Field2
-        crc = self._crc32_calc(crc=crc, data=int(split_record[0]))
+        crc: int = self._crc32_calc(crc=crc, data=int(split_record[0]))
 
         # Then, calculate the CRC with the previous CRC and Instruction + Field1 together
-        crc = self._crc32_calc(crc=crc, data=int(split_record[1]))
+        crc: int = self._crc32_calc(crc=crc, data=int(split_record[1]))
 
         return crc
 
@@ -358,7 +361,7 @@ class LutCmd(object):
         :rtype: List[List[LutRecord]]
         """
         list_ = []
-        count = len(list_input)
+        count: int = len(list_input)
         for i in range(0, count, max_list_size):
             list_.append(list_input[i:i + min(max_list_size, count - i)])
         return list_
@@ -376,8 +379,8 @@ class LutCmd(object):
             lines = list(f)
         logging.info(lines)
 
-        list_ = []
-        line_count = 0
+        list_: List[LutRecord] = []
+        line_count: int = 0
         for line in lines:
             if line_count == 0:
                 if "Instruction;Field 1;Field 2" not in lines[0]:
@@ -501,15 +504,16 @@ if __name__ == "__main__":
     # start logging
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s:%(module)s:%(levelname)s:%(message)s")
 
-    phy_com = MeComPhySerialPort()
+    phy_com: MeComPhySerialPort = MeComPhySerialPort()
     phy_com.connect(port_name="COM9")
 
-    mequery_set = MeComQuerySet(phy_com=phy_com)
+    mequery_set: MeComQuerySet = MeComQuerySet(phy_com=phy_com)
 
-    lut_cmd = LutCmd(mecom_query_set=mequery_set)
+    lut_cmd: LutCmd = LutCmd(mecom_query_set=mequery_set)
 
-    filepath_ = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                             "csv/LookupTable Sine ramp_0.1_degC_per_sec.csv")
+    filepath_ = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "csv/LookupTable Sine ramp_0.1_degC_per_sec.csv"
+    )
     lut_cmd.download_lookup_table(address=2, filepath=filepath_)
 
     lut_status_query = lut_cmd.get_lut_status_query(address=2)

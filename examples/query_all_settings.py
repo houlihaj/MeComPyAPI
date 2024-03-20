@@ -1,6 +1,6 @@
 import time
 import logging
-from mecompyapi.tec1090series import MeerstetterTEC
+from mecompyapi.tec import MeerstetterTEC
 
 
 if __name__ == "__main__":
