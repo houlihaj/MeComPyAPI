@@ -1304,55 +1304,47 @@ class MeerstetterTEC(object):
 
 
 if __name__ == "__main__":
+    # start logging
+    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s:%(module)s:%(levelname)s:%(message)s")
+
     mc = MeerstetterTEC()
     mc.connect_serial_port(port="COM9", instance=1)
 
     firmware_identification_string = mc.get_firmware_identification_string()
-    print(
+    logging.info(
         f"firmware_identification_string : "
         f"{firmware_identification_string} ; "
-        f"type {type(firmware_identification_string)}"
+        f"type {type(firmware_identification_string)}\n"
     )
-    print("\n", end="")
 
-    print(f"device_type : {mc.get_device_type()} ; type {type(mc.get_device_type())}")
-    print("\n", end="")
+    logging.info(f"device_type : {mc.get_device_type()} ; type {type(mc.get_device_type())}\n")
 
-    print(f"temperature : {mc.get_temperature()} ; type {type(mc.get_temperature())}")
-    print("\n", end="")
+    logging.info(f"temperature : {mc.get_temperature()} ; type {type(mc.get_temperature())}\n")
 
     filepath_ = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         "mecom_tec/lookup_table/csv/LookupTable Sine ramp_0.1_degC_per_sec.csv"
     )
     mc.download_lookup_table(filepath=filepath_)
-    print("\n", end="")
 
     mc.set_proportional_gain(prop_gain=50.0)
-    print(f"proportional_gain : {mc.get_proportional_gain()} ; type {type(mc.get_proportional_gain())}")
-    print("\n", end="")
+    logging.info(f"proportional_gain : {mc.get_proportional_gain()} ; type {type(mc.get_proportional_gain())}\n")
 
     mc.set_proportional_gain(prop_gain=60.0)
-    print(f"proportional_gain : {mc.get_proportional_gain()} ; type {type(mc.get_proportional_gain())}")
-    print("\n", end="")
+    logging.info(f"proportional_gain : {mc.get_proportional_gain()} ; type {type(mc.get_proportional_gain())}\n")
 
     mc.set_integration_time(int_time_sec=40.0)
-    print(f"integration_time : {mc.get_integration_time()} ; type {type(mc.get_integration_time())}")
-    print("\n", end="")
+    logging.info(f"integration_time : {mc.get_integration_time()} ; type {type(mc.get_integration_time())}\n")
 
     mc.set_integration_time(int_time_sec=45.0)
-    print(f"integration_time : {mc.get_integration_time()} ; type {type(mc.get_integration_time())}")
-    print("\n", end="")
+    logging.info(f"integration_time : {mc.get_integration_time()} ; type {type(mc.get_integration_time())}\n")
 
     mc.set_differential_time(diff_time_sec=1.0)
-    print(f"differential_time : {mc.get_differential_time()} ; type {type(mc.get_differential_time())}")
-    print("\n", end="")
+    logging.info(f"differential_time : {mc.get_differential_time()} ; type {type(mc.get_differential_time())}\n")
 
     mc.set_differential_time(diff_time_sec=0.0)
-    print(f"differential_time : {mc.get_differential_time()} ; type {type(mc.get_differential_time())}")
-    print("\n", end="")
+    logging.info(f"differential_time : {mc.get_differential_time()} ; type {type(mc.get_differential_time())}\n")
 
-    print(f"part_damping : {mc.get_part_damping()} ; type {type(mc.get_part_damping())}")
-    print("\n", end="")
+    logging.info(f"part_damping : {mc.get_part_damping()} ; type {type(mc.get_part_damping())}\n")
 
     mc.tear()

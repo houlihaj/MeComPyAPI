@@ -13,21 +13,18 @@ if __name__ == '__main__':
     mc.connect_serial_port(port="COM13")
 
     identity = mc.get_id()
-    print("identity: {}".format(identity))
-    print("\n", end="")
+    logging.info(f"identity: {identity}\n")
 
-    print("status: {}".format(mc.get_device_status()))
-    print("\n", end="")
+    logging.info(f"status: {mc.get_device_status()}\n")
 
     mc.reset()
-    print("status: {}".format(mc.get_device_status()))
+    logging.info(f"status: {mc.get_device_status()}")
     time.sleep(2.0)  # Wait time of 2 seconds is required to maintain connection.
-    print("status: {}".format(mc.get_device_status()))
-    print("\n", end="")
+    logging.info(f"status: {mc.get_device_status()}\n")
 
     mc.set_automatic_save_to_flash(save_to_flash=SaveToFlashState.DISABLED)
 
     save_to_flash_state: SaveToFlashState = mc.get_automatic_save_to_flash()
-    print("save_to_flash_state: {}".format(mc.get_automatic_save_to_flash()))
+    logging.info("save_to_flash_state: {}".format(mc.get_automatic_save_to_flash()))
 
     mc.tear()

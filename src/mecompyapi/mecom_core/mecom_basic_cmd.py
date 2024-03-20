@@ -1,3 +1,5 @@
+import logging
+
 from mecompyapi.mecom_core.com_command_exception import ComCommandException
 from mecompyapi.mecom_core.mecom_frame import MeComPacket
 from mecompyapi.mecom_core.mecom_query_set import MeComQuerySet
@@ -353,6 +355,9 @@ class MeComBasicCmd:
 
 
 if __name__ == "__main__":
+    # start logging
+    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s:%(module)s:%(levelname)s:%(message)s")
+
     phy_com: MeComPhySerialPort = MeComPhySerialPort()
     phy_com.connect(port_name="COM9")
 
@@ -361,23 +366,20 @@ if __name__ == "__main__":
     mecom_basic_cmd: MeComBasicCmd = MeComBasicCmd(mequery_set=mequery_set_)
 
     identify: str = mecom_basic_cmd.get_ident_string(address=2, channel=1)
-    print(f"identify : {identify}")
-    print(f"type(identify) : {type(identify)}")
-    print("\n", end="")
+    logging.info(f"identify : {identify}")
+    logging.info(f"type(identify) : {type(identify)}\n")
 
     device_type_: int = mecom_basic_cmd.get_int32_value(
         address=2, parameter_id=100, instance=1
     )  # parameter_name : "Device Type"
-    print(f"device_type : {device_type_}")
-    print(f"type(device_type) : {type(device_type_)}")
-    print("\n", end="")
+    logging.info(f"device_type : {device_type_}")
+    logging.info(f"type(device_type) : {type(device_type_)}\n")
 
     object_temperature: float = mecom_basic_cmd.get_float_value(
         address=2, parameter_id=1000, instance=1
     )  # parameter_name : "Object Temperature"
-    print(f"object_temperature : {object_temperature}")
-    print(f"type(object_temperature) : {type(object_temperature)}")
-    print("\n", end="")
+    logging.info(f"object_temperature : {object_temperature}")
+    logging.info(f"type(object_temperature) : {type(object_temperature)}\n")
 
     phy_com.tear()
-    print("Done...")
+    logging.info("Done...")

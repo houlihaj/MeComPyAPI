@@ -13,23 +13,20 @@ if __name__ == '__main__':
     mc.connect_serial_port(port="COM13")
 
     identity = mc.get_id()
-    print(f"identity: {identity}")
-    print("\n", end="")
+    logging.info(f"identity: {identity}\n")
 
-    print(f"status: {mc.get_device_status()}")
-    print("\n", end="")
+    logging.info(f"status: {mc.get_device_status()}\n")
 
     mc.reset()
-    print(f"status: {mc.get_device_status()}")
+    logging.info(f"status: {mc.get_device_status()}")
     time.sleep(2.0)  # Wait time of 2 seconds is required to maintain connection.
-    print(f"status: {mc.get_device_status()}")
-    print("\n", end="")
+    logging.info(f"status: {mc.get_device_status()}\n")
 
     # Have to wait for a short period after resetting
     # to get readings successfully
     time.sleep(1.0)
 
-    data_log = mc.get_monitor_data_logger(header=True)
-    print(data_log)
+    data_log: str = mc.get_monitor_data_logger(header=True)
+    logging.info(data_log)
 
     mc.tear()

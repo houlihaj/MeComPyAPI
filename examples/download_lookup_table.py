@@ -2,10 +2,10 @@ import os
 import time
 import logging
 from pathlib import Path
-from mecompyapi.tec1090series import MeerstetterTEC, SaveToFlashState
+from mecompyapi.tec1090series import MeerstetterTEC
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # start logging
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s:%(module)s:%(levelname)s:%(message)s")
 
@@ -24,19 +24,15 @@ if __name__ == '__main__':
     mc.connect_serial_port(port="COM13")
 
     identity = mc.get_id()
-    print("identity: {}".format(identity))
-    print("\n", end="")
+    logging.info(f"identity: {identity}\n")
 
-    print("status: {}".format(mc.get_device_status()))
-    print("\n", end="")
+    logging.info(f"status: {mc.get_device_status()}\n")
 
     mc.reset()
-    print("status: {}".format(mc.get_device_status()))
+    logging.info(f"status: {mc.get_device_status()}")
     time.sleep(2.0)  # Wait time of 2 seconds is required to maintain connection.
-    print("status: {}".format(mc.get_device_status()))
-    print("\n", end="")
+    logging.info(f"status: {mc.get_device_status()}\n")
 
     mc.download_lookup_table(filepath=filepath_)
-    print("\n", end="")
 
     mc.tear()

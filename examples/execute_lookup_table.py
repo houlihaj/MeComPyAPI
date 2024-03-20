@@ -7,7 +7,7 @@ from mecompyapi.mecom_tec.lookup_table.lut_status import LutStatus
 from mecompyapi.tec1090series import MeerstetterTEC, SaveToFlashState
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # start logging
     logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(module)s:%(levelname)s:%(message)s")
 
@@ -28,27 +28,23 @@ if __name__ == '__main__':
 
         if mc.get_lookup_table_status() == LutStatus.EXECUTING:
             mc.stop_lookup_table()
-            print("Lookup Table was stopped...")
+            logging.info("Lookup Table was stopped...")
 
         identity = mc.get_id()
-        print("identity: {}".format(identity))
-        print("\n", end="")
+        logging.info(f"identity: {identity}\n")
 
-        print("status: {}".format(mc.get_device_status()))
-        print("\n", end="")
+        logging.info(f"status: {mc.get_device_status()}\n")
 
         mc.reset()
-        print("status: {}".format(mc.get_device_status()))
+        logging.info(f"status: {mc.get_device_status()}")
         time.sleep(2.0)  # Wait time of 2 seconds is required to maintain connection.
-        print("status: {}".format(mc.get_device_status()))
-        print("\n", end="")
+        logging.info(f"status: {mc.get_device_status()}\n")
 
         mc.download_lookup_table(filepath=filepath_)
 
         mc.set_automatic_save_to_flash(save_to_flash=SaveToFlashState.DISABLED)
 
-        # mc.set_coarse_temperature_ramp(temp_ramp_degc_per_sec=0.1)
-        mc.set_coarse_temperature_ramp(temp_ramp_degc_per_sec=0.2)
+        mc.set_coarse_temperature_ramp(temp_ramp_degc_per_sec=0.1)
 
         mc.execute_lookup_table(timeout=300)
 
@@ -56,5 +52,5 @@ if __name__ == '__main__':
         raise e
 
     finally:
-        print("Disconnect from the TEC controller...")
+        logging.info("Disconnect from the TEC controller...")
         mc.tear()
