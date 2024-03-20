@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 from mecompyapi.mecom_tec.lookup_table.lut_status import LutStatus
-from mecompyapi.tec1090series import MeerstetterTEC, SaveToFlashState
+from mecompyapi.tec import MeerstetterTEC, SaveToFlashState
 
 
 if __name__ == "__main__":

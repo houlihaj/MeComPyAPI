@@ -2,7 +2,7 @@ import os
 import time
 import logging
 from pathlib import Path
-from mecompyapi.tec1090series import MeerstetterTEC
+from mecompyapi.tec import MeerstetterTEC
 
 
 if __name__ == "__main__":
