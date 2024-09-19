@@ -10,7 +10,8 @@ if __name__ == "__main__":
     # initialize controller
     mc = MeerstetterTEC()
 
-    mc.connect_serial_port(port="COM9")
+    # mc.connect_serial_port(port="COM9")
+    mc.connect_serial_port(port="/dev/tec")
 
     identity = mc.get_id()
     logging.info(f"identity: {identity}\n")
