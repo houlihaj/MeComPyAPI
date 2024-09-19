@@ -149,8 +149,8 @@ class MeerstetterTEC(object):
         self.phy_com: MeComPhySerialPort = MeComPhySerialPort()
         self.phy_com.connect(port_name=port)
 
-        mequery_set = MeComQuerySet(phy_com=self.phy_com)
-        self.mecom_basic_cmd = MeComBasicCmd(mequery_set=mequery_set)
+        mequery_set: MeComQuerySet = MeComQuerySet(phy_com=self.phy_com)
+        self.mecom_basic_cmd: MeComBasicCmd = MeComBasicCmd(mequery_set=mequery_set)
 
         # Get Identification String
         fw_id_str: str = self.get_firmware_identification_string(broadcast=True)
@@ -158,10 +158,10 @@ class MeerstetterTEC(object):
 
         self.mecom_lut_cmd = LutCmd(mecom_query_set=mequery_set)
 
-        retries = 3
+        retries: int = 3
         for _ in range(retries):
             try:
-                self.address = self.get_device_address()
+                self.address: int = self.get_device_address()
                 logging.debug(f"connected to {self.address}")
                 return
             except ComCommandException as e:
@@ -266,8 +266,9 @@ class MeerstetterTEC(object):
         :rtype: int
         """
         logging.debug(f"get device type for channel {self.instance}")
-        device_type = self.mecom_basic_cmd.get_int32_value(
-            address=self.address, parameter_id=100, instance=self.instance
+        device_type: int = (
+            self.mecom_basic_cmd.get_int32_value(
+                address=self.address, parameter_id=100, instance=self.instance)
         )
         return device_type
 
@@ -279,7 +280,7 @@ class MeerstetterTEC(object):
         :rtype: int
         """
         logging.debug(f"get hardware version for channel {self.instance}")
-        hardware_version = self.mecom_basic_cmd.get_int32_value(
+        hardware_version: int = self.mecom_basic_cmd.get_int32_value(
             address=self.address, parameter_id=101, instance=self.instance
         )
         return hardware_version
@@ -292,7 +293,7 @@ class MeerstetterTEC(object):
         :rtype: int
         """
         logging.debug(f"get serial number for channel {self.instance}")
-        serial_number = self.mecom_basic_cmd.get_int32_value(
+        serial_number: int = self.mecom_basic_cmd.get_int32_value(
             address=self.address, parameter_id=102, instance=self.instance
         )
         return serial_number
@@ -1279,6 +1280,7 @@ class MeerstetterTEC(object):
             "firmware_version": self.get_firmware_version(),
             "device_status": self.get_device_status(),
             "object_temperature": self.get_temperature(),
+            "setpoint_temperature": self.get_setpoint_temperature(),
             "actual_output_current": self.get_tec_current(),
             "actual_output_voltage": self.get_tec_voltage(),
             "device_temperature": self.get_device_temperature(),

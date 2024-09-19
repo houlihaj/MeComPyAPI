@@ -1,9 +1,14 @@
 import logging
+
+logging.getLogger().setLevel(level=logging.DEBUG)
+
 import time
 from typing import Optional
 
-import ftd2xx
-from ftd2xx import FTD2XX, defines
+try:
+    import ftd2xx
+except OSError as e:
+    logging.warning(e)
 
 from mecompyapi.phy_wrapper.int_mecom_phy import (
     IntMeComPhy, MeComPhyInterfaceException, MeComPhyTimeoutException
@@ -19,7 +24,7 @@ class MeComPhyFtdi(IntMeComPhy):
         Implements the IMeComPhy interface for the FTDI chip drivers.
         """
         super().__init__()
-        self.ftdi: Optional[FTD2XX] = None
+        self.ftdi: Optional[ftd2xx.FTD2XX] = None
 
     def mecom_set_default_settings(self, baudrate: int, timeout: int):
         """
@@ -35,20 +40,22 @@ class MeComPhyFtdi(IntMeComPhy):
         """
         self.ftdi.setBaudRate(baud=baudrate)
         self.ftdi.setDataCharacteristics(
-            wordlen=defines.BITS_8, stopbits=defines.STOP_BITS_1, parity=defines.PARITY_NONE
+            wordlen=ftd2xx.ftd2xx.defines.BITS_8,
+            stopbits=ftd2xx.ftd2xx.defines.STOP_BITS_1,
+            parity=ftd2xx.ftd2xx.defines.PARITY_NONE
         )
-        self.ftdi.setFlowControl(flowcontrol=defines.FLOW_NONE, xon=0, xoff=0)
+        self.ftdi.setFlowControl(flowcontrol=ftd2xx.ftd2xx.defines.FLOW_NONE, xon=0, xoff=0)
         self.ftdi.setTimeouts(read=timeout * 1000, write=timeout * 1000)
         self.ftdi.setLatencyTimer(latency=3)
         # Purges receive and transmit buffer in the device
-        self.ftdi.purge(mask=defines.PURGE_RX | defines.PURGE_TX)
+        self.ftdi.purge(mask=ftd2xx.ftd2xx.defines.PURGE_RX | ftd2xx.ftd2xx.defines.PURGE_TX)
 
     def connect(
             self, id_str: Optional[str] = None, dev_id: int = 0, baudrate: int = 57_600, timeout: int = 1
     ) -> None:
         """
         Open a handle to an usb device by serial number(default), description or
-        location(Windows only) depending on value of flags and return an FTD2XX
+        location(Windows only) depending on value of flags and return an ftd2xx.FTD2XX
         instance for it.
 
         :param id_str: ID string from listDevices
@@ -63,9 +70,9 @@ class MeComPhyFtdi(IntMeComPhy):
         """
         if id_str is not None:
             id_str_bytes: bytes = id_str.encode()
-            self.ftdi: FTD2XX = ftd2xx.openEx(id_str=id_str_bytes)
+            self.ftdi: ftd2xx.FTD2XX = ftd2xx.openEx(id_str=id_str_bytes)
         else:
-            self.ftdi: FTD2XX = ftd2xx.open(dev=dev_id)
+            self.ftdi: ftd2xx.FTD2XX = ftd2xx.open(dev=dev_id)
 
         self.mecom_set_default_settings(baudrate=baudrate, timeout=timeout)
 
@@ -77,7 +84,7 @@ class MeComPhyFtdi(IntMeComPhy):
         :return: None
         """
         # Purges receive and transmit buffer in the device
-        self.ftdi.purge(mask=defines.PURGE_RX | defines.PURGE_TX)
+        self.ftdi.purge(mask=ftd2xx.ftd2xx.defines.PURGE_RX | ftd2xx.ftd2xx.defines.PURGE_TX)
         self.ftdi.close()
 
     def send_string(self, stream: str) -> None:
@@ -89,7 +96,7 @@ class MeComPhyFtdi(IntMeComPhy):
         :return: None
         """
         # Purges receive and transmit buffer in the device
-        self.ftdi.purge(mask=defines.PURGE_RX | defines.PURGE_TX)
+        self.ftdi.purge(mask=ftd2xx.ftd2xx.defines.PURGE_RX | ftd2xx.ftd2xx.defines.PURGE_TX)
 
         stream_bytes: bytes = stream.encode()
 
