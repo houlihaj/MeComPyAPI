@@ -990,12 +990,15 @@ class MeerstetterTEC(object):
         :raises LutException:
         :return: None
         """
+        logging.debug(f"download the lookup table for channel {self.instance}")
         # Enter the path to the lookup table file (*.csv)
         try:
             self.mecom_lut_cmd.download_lookup_table(address=self.address, filepath=filepath)
             timeout: int = 0
             while True:
-                status: LutStatus = self.mecom_lut_cmd.get_status(address=self.address, instance=self.instance)
+                status: LutStatus = (
+                    self.mecom_lut_cmd.get_status(address=self.address, instance=self.instance)
+                )
                 logging.info(f"LutCmd status : {status}")
                 if status == LutStatus.NO_INIT or status == LutStatus.ANALYZING:
                     timeout += 1
@@ -1017,6 +1020,7 @@ class MeerstetterTEC(object):
         :raises ComCommandException:
         :return: None
         """
+        logging.debug(f"start the lookup table for channel {self.instance}")
         try:
             self.mecom_lut_cmd.start_lookup_table(address=self.address, instance=self.instance)
         except LutException as e:
@@ -1029,6 +1033,7 @@ class MeerstetterTEC(object):
         :raises ComCommandException:
         :return: None
         """
+        logging.debug(f"stop the lookup table for channel {self.instance}")
         try:
             self.mecom_lut_cmd.stop_lookup_table(address=self.address, instance=self.instance)
         except LutException as e:
@@ -1077,12 +1082,15 @@ class MeerstetterTEC(object):
             logging.info(f"lookup table status : {lut_status}")
 
             if lut_status != LutStatus.EXECUTING:
+                logging.exception(
+                    "The lookup status should be LutStatus.EXECUTING after starting the lookup table ; "
+                    f"instead the lookup status is {lut_status}."
+                )
                 raise LutException(
-                    f"The lookup status should be LutStatus.EXECUTING after starting the lookup table ; "
+                    "The lookup status should be LutStatus.EXECUTING after starting the lookup table ; "
                     f"instead the lookup status is {lut_status}."
                 )
 
-            # timeout = 300  # timeout is in units of seconds
             runtime = 0.0
             start_time = time.time()  # acquisition start
             acq = 0
