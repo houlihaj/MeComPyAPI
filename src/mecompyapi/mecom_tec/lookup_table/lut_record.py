@@ -12,27 +12,27 @@ class LutRecord(object):
 
     def __init__(self):
         # Instruction value
-        self._instruction = 0  # type: int
+        self._instruction: int = 0
 
         # First field value
-        self._field1 = 0  # type: int
+        self._field1: int = 0
         # First field value split into three bytes
         self._field1b0: int = self.field1 & 0x0000FF
         self._field1b1: int = (self.field1 & 0x00FF00) >> 8
         self._field1b2: int = (self.field1 & 0xFF0000) >> 16
         # Instruction combined with Field1 in a 32-bit int
-        self._instruction_and_field_1 = 0  # type: int
+        self._instruction_and_field_1: int = 0
 
         # Second field value is an integer or float
-        self._field2 = 0  # type: int
+        self._field2: int = 0
         # Second field value split into four bytes
-        self._field2_b0 = 0  # type: int
-        self._field2_b1 = 0  # type: int
-        self._field2_b2 = 0  # type: int
-        self._field2_b3 = 0  # type: int
+        self._field2_b0: int = 0
+        self._field2_b1: int = 0
+        self._field2_b2: int = 0
+        self._field2_b3: int = 0
 
         # Second field value is an integer (use Field2Float to store a float)
-        self._field2_int = 0  # type: int
+        self._field2_int: int = 0
         # Second field int value split into four bytes
         self._field2_int_b0: int = self.field2_int & 0x000000FF
         self._field2_int_b1: int = (self.field2_int & 0x0000FF00) >> 8
@@ -40,12 +40,12 @@ class LutRecord(object):
         self._field2_int_b3: int = (self.field2_int & 0xFF000000) >> 24
 
         # Second field value is a float (use Field2Int to store an int)
-        self._field2_float = 0  # type: float
+        self._field2_float: float = 0
         # Second field float value split into four bytes
-        self._field2_float_b0 = 0  # type: int
-        self._field2_float_b1 = 0  # type: int
-        self._field2_float_b2 = 0  # type: int
-        self._field2_float_b3 = 0  # type: int
+        self._field2_float_b0: int = 0
+        self._field2_float_b1: int = 0
+        self._field2_float_b2: int = 0
+        self._field2_float_b3: int = 0
 
     @property
     def instruction(self):

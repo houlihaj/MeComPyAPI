@@ -7,9 +7,10 @@ from mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
 
 
 if __name__ == "__main__":
-    # start logging
+    # Start logging
     logging.basicConfig(
-        level=logging.DEBUG, format="%(asctime)s:%(module)s:%(levelname)s:%(message)s"
+        level=logging.DEBUG,
+        format="%(asctime)s:%(module)s:%(levelname)s:%(message)s"
     )
 
     phy_com: MeComPhySerialPort = MeComPhySerialPort()

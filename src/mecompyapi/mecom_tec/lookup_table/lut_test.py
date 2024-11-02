@@ -11,11 +11,11 @@ from mecompyapi.phy_wrapper.mecom_phy_serial_port import MeComPhySerialPort
 
 class LutTest:
     def __init__(self):
-        phy_com = MeComPhySerialPort()
+        phy_com: MeComPhySerialPort = MeComPhySerialPort()
         phy_com.connect(port_name="COM9")
-        mequery_set = MeComQuerySet(phy_com=phy_com)
-        
-        self.mecom_lut_cmd = LutCmd(mecom_query_set=mequery_set)
+        mequery_set: MeComQuerySet = MeComQuerySet(phy_com=phy_com)
+
+        self.mecom_lut_cmd: LutCmd = LutCmd(mecom_query_set=mequery_set)
 
     def sub_loop(self) -> None:
         """
@@ -24,19 +24,19 @@ class LutTest:
         """
         self._download_lookup_table()
         self._start_lookup_table()
-        time.sleep(secs=30)
+        time.sleep(30)
         self._stop_lookup_table()
 
     def _download_lookup_table(self) -> None:
         """
         :return: None
         """
-        filepath = "LookupTable Sine ramp_0.1_degC_per_sec.csv"
+        filepath: str = "LookupTable Sine ramp_0.1_degC_per_sec.csv"
 
         # Enter the path to the lookup table file (*.csv)
         try:
             self.mecom_lut_cmd.download_lookup_table(address=2, filepath=filepath)
-            status = LutStatus.NO_INIT
+            status: LutStatus = LutStatus.NO_INIT
             timeout: int = 0
             while True:
                 status: LutStatus = self.mecom_lut_cmd.get_status(address=2, instance=1)

@@ -3,29 +3,47 @@ import logging
 from mecompyapi.tec import MeerstetterTEC
 
 
-if __name__ == "__main__":
-    # start logging
-    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s:%(module)s:%(levelname)s:%(message)s")
+# Create and configure logger object
+logger: logging.Logger = (
+    logging.getLogger(name=__name__)
+)
 
+
+def main():
+    """
+
+    :return: None
+    """
     # initialize controller
     mc = MeerstetterTEC()
 
     # mc.connect_serial_port(port="COM9")
-    mc.connect_serial_port(port="/dev/tec")
+    mc.connect_serial_port(port="/dev/ttyUSB9")
 
     identity = mc.get_id()
-    logging.info(f"identity: {identity}\n")
+    logger.info(f"identity: {identity}\n")
 
-    logging.info(f"status: {mc.get_device_status()}\n")
+    logger.info(f"status: {mc.get_device_status()}\n")
 
     mc.reset()
-    logging.info(f"status: {mc.get_device_status()}")
+    logger.info(f"status: {mc.get_device_status()}")
     time.sleep(2.0)  # Wait time of 2 seconds is required to maintain connection.
-    logging.info(f"status: {mc.get_device_status()}\n")
+    logger.info(f"status: {mc.get_device_status()}\n")
 
     settings = mc.get_all_settings()
-    logging.info(f"settings:\n")
+    logger.info(f"settings:\n")
     for key in settings:
-        logging.info(f"{key} : {settings[key]}")
+        logger.info(f"{key} : {settings[key]}")
 
     mc.tear()
+
+
+if __name__ == "__main__":
+    # Start logging
+    logging.basicConfig(
+        # level=logging.DEBUG,
+        level=logging.INFO,
+        format="%(asctime)s:%(module)s:%(levelname)s:%(message)s"
+    )
+
+    main()

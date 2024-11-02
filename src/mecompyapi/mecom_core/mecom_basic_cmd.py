@@ -355,8 +355,11 @@ class MeComBasicCmd:
 
 
 if __name__ == "__main__":
-    # start logging
-    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s:%(module)s:%(levelname)s:%(message)s")
+    # Start logging
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s:%(module)s:%(levelname)s:%(message)s"
+    )
 
     phy_com: MeComPhySerialPort = MeComPhySerialPort()
     phy_com.connect(port_name="COM9")
@@ -369,15 +372,23 @@ if __name__ == "__main__":
     logging.info(f"identify : {identify}")
     logging.info(f"type(identify) : {type(identify)}\n")
 
-    device_type_: int = mecom_basic_cmd.get_int32_value(
-        address=2, parameter_id=100, instance=1
-    )  # parameter_name : "Device Type"
+    device_type_: int = (
+        mecom_basic_cmd.get_int32_value(
+            address=2,
+            parameter_id=100,  # parameter_name : "Device Type"
+            instance=1
+        )
+    )
     logging.info(f"device_type : {device_type_}")
     logging.info(f"type(device_type) : {type(device_type_)}\n")
 
-    object_temperature: float = mecom_basic_cmd.get_float_value(
-        address=2, parameter_id=1000, instance=1
-    )  # parameter_name : "Object Temperature"
+    object_temperature: float = (
+        mecom_basic_cmd.get_float_value(
+            address=2,
+            parameter_id=1000,  # parameter_name : "Object Temperature"
+            instance=1
+        )
+    )
     logging.info(f"object_temperature : {object_temperature}")
     logging.info(f"type(object_temperature) : {type(object_temperature)}\n")
 

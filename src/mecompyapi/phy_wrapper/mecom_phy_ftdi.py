@@ -1,14 +1,8 @@
 import logging
-
-logging.getLogger().setLevel(level=logging.DEBUG)
-
 import time
 from typing import Optional
 
-try:
-    import ftd2xx
-except OSError as e:
-    logging.warning(e)
+import ftd2xx
 
 from mecompyapi.phy_wrapper.int_mecom_phy import (
     IntMeComPhy, MeComPhyInterfaceException, MeComPhyTimeoutException

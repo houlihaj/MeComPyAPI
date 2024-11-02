@@ -501,8 +501,11 @@ class LutCmd(object):
 
 
 if __name__ == "__main__":
-    # start logging
-    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s:%(module)s:%(levelname)s:%(message)s")
+    # Start logging
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s:%(module)s:%(levelname)s:%(message)s"
+    )
 
     phy_com: MeComPhySerialPort = MeComPhySerialPort()
     phy_com.connect(port_name="COM9")
@@ -511,12 +514,15 @@ if __name__ == "__main__":
 
     lut_cmd: LutCmd = LutCmd(mecom_query_set=mequery_set)
 
-    filepath_ = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "csv/LookupTable Sine ramp_0.1_degC_per_sec.csv"
+    filepath_: str = (
+        os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "csv/LookupTable Sine ramp_0.1_degC_per_sec.csv"
+        )
     )
     lut_cmd.download_lookup_table(address=2, filepath=filepath_)
 
-    lut_status_query = lut_cmd.get_lut_status_query(address=2)
+    lut_status_query: int = lut_cmd.get_lut_status_query(address=2)
     logging.info(f"lut_status_query : {lut_status_query}")
 
     status_: LutStatus = lut_cmd.get_status(address=2, instance=1)
