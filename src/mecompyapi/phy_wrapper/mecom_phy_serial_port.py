@@ -20,7 +20,7 @@ class MeComPhySerialPort(IntMeComPhy):
         Implements the IMeComPhy interface for the Serial Port interface.
         """
         super().__init__()
-        self.ser = Serial()
+        self.ser: Serial = Serial()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.ser.__exit__(exc_type, exc_val, exc_tb)
@@ -28,7 +28,7 @@ class MeComPhySerialPort(IntMeComPhy):
     def __enter__(self):
         return self
 
-    def open_with_default_settings(self, port_name: str, baud_rate):
+    def open_with_default_settings(self, port_name: str, baud_rate: int):
         """
         Opens the SerialPort with the standard settings used to communicate with ME devices.
 

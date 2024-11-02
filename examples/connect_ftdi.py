@@ -2,21 +2,38 @@ import logging
 from mecompyapi.tec import MeerstetterTEC
 
 
-if __name__ == '__main__':
-    # start logging
-    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s:%(module)s:%(levelname)s:%(message)s")
+# Create and configure logger object
+logger: logging.Logger = (
+    logging.getLogger(name=__name__)
+)
 
+
+def main():
+    """
+
+    :return: None
+    """
     # initialize controller
-    mc = MeerstetterTEC()
+    mc: MeerstetterTEC = MeerstetterTEC()
 
     mc.connect_ftdi(id_str="DK0E1IDC")
 
-    fw_id_string = (
+    fw_id_string: str = (
         mc.get_firmware_identification_string()
     )  # response is always 20 char long; padded with spaces if needed
-    logging.info(f"FW Identification String : {fw_id_string}\n")
+    logger.info(f"FW Identification String : {fw_id_string}\n")
 
-    identity = mc.get_id()
-    logging.info(f"identity: {identity}")
+    identity: str = mc.get_id()
+    logger.info(f"identity: {identity}")
 
     mc.tear()
+
+
+if __name__ == '__main__':
+    # Start logging
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s:%(module)s:%(levelname)s:%(message)s"
+    )
+
+    main()

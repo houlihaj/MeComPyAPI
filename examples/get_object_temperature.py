@@ -2,6 +2,19 @@ import logging
 from mecompyapi.tec import MeerstetterTEC, SaveToFlashState
 
 
+# Create and configure logger object
+logger: logging.Logger = (
+    logging.getLogger(name=__name__)
+)
+
+
+def main():
+    """
+
+    :return: None
+    """
+
+
 if __name__ == '__main__':
     # start logging
     logging.basicConfig(level=logging.DEBUG, format="%(asctime)s:%(module)s:%(levelname)s:%(message)s")
